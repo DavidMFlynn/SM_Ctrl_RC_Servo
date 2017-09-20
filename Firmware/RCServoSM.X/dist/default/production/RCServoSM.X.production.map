@@ -1,0 +1,153 @@
+MPLINK 5.08, LINKER
+Linker Map File - Created Mon Sep 18 16:52:29 2017
+
+                                 Section Info
+                  Section       Type    Address   Location Size(Bytes)
+                ---------  ---------  ---------  ---------  ---------
+                   .org_1       code   0x000000    program   0x000006
+                   .org_2       code   0x000004    program   0x00032e
+                   .cinit    romdata   0x00019b    program   0x000004
+                  .idlocs       code   0x008000    program   0x000008
+.config_8007_BUILD/DEFAULT/PRODUCTION/_EXT/95       code   0x008007    program   0x000002
+.config_8008_BUILD/DEFAULT/PRODUCTION/_EXT/95       code   0x008008    program   0x000002
+                   .org_0       code   0x00f000    program   0x00000a
+
+
+
+                              Program Memory Usage 
+                               Start         End      
+                           ---------   ---------      
+                            0x000000    0x000002      
+                            0x000004    0x00019c      
+                            0x008000    0x008003      
+                            0x008007    0x008008      
+                            0x00f000    0x00f004      
+            423 out of 2311 program addresses used, program memory utilization is 18%
+
+
+
+                              Symbols - Sorted by Name
+                     Name    Address   Location    Storage File                     
+                ---------  ---------  ---------  --------- ---------                
+                 ClampInt   0x000102    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+               ClampInt_1   0x00010f    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+         ClampInt_tooHigh   0x00011e    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+          ClampInt_tooLow   0x000119    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+                 ClearRam   0x000123    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+              ClearRam_L2   0x00012e    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+              Copy7CToSig   0x0000c1    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+            Copy7CToSig_1   0x0000c9    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+           CopyPos1ToTemp   0x0000d8    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+           CopyPos2ToTemp   0x0000dd    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+            CopyPosToTemp   0x0000d5    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+            CopyTempToPos   0x0000d2    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+           CopyTempToPos1   0x0000e2    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+           CopyTempToPos2   0x0000e7    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+                CopyToRam   0x000133    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+             CopyToRam_L1   0x000139    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+                 DecTimer   0x000159    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+                DecTimer1   0x000158    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+                DecTimer2   0x000156    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+                DecTimer3   0x000154    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+                DecTimer4   0x000152    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+               Delay100uS   0x000173    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+                Delay10uS   0x000171    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+                Delay40uS   0x000175    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+                 DelayWuS   0x000176    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+            DelayWuS_Loop   0x000177    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+                   EERead   0x00017b    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+                  EEReadW   0x00017a    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+                  EEWrite   0x000185    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+              EEWriteLoop   0x000197    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+                 EEWriteW   0x000184    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+                    IRQ_2   0x000027    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+               IRQ_Servo1   0x000027    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+             IRQ_Servo1_1   0x00002f    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+           IRQ_Servo1_End   0x000049    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+            IRQ_Servo1_OL   0x000041    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+             IRQ_Servo1_X   0x000047    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+                 LED2_End   0x000026    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+              ML_Btns_Dec   0x000090    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+              ML_Btns_End   0x00009c    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+             ML_CmdNormal   0x0000b2    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+                 MainLoop   0x00007e    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+                 Move_End   0x0000c0    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+                  Move_It   0x0000bf    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+            Norm_Debounce   0x0000bd    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+             Rev_Debounce   0x0000b0    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+               SaveParams   0x000142    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+            SaveParams_L1   0x000148    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+        SetMiddlePosition   0x0000fd    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+               StartServo   0x0000ec    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+            SystemBlink_1   0x000018    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+          SystemBlink_end   0x00001e    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+              TestT1_Zero   0x00016e    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+              TestT2_Zero   0x00016b    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+              TestT3_Zero   0x000168    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+              TestT4_Zero   0x000165    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+                    start   0x00004a    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+
+
+
+                              Symbols - Sorted by Address
+                     Name    Address   Location    Storage File                     
+                ---------  ---------  ---------  --------- ---------                
+            SystemBlink_1   0x000018    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+          SystemBlink_end   0x00001e    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+                 LED2_End   0x000026    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+                    IRQ_2   0x000027    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+               IRQ_Servo1   0x000027    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+             IRQ_Servo1_1   0x00002f    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+            IRQ_Servo1_OL   0x000041    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+             IRQ_Servo1_X   0x000047    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+           IRQ_Servo1_End   0x000049    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+                    start   0x00004a    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+                 MainLoop   0x00007e    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+              ML_Btns_Dec   0x000090    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+              ML_Btns_End   0x00009c    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+             Rev_Debounce   0x0000b0    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+             ML_CmdNormal   0x0000b2    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+            Norm_Debounce   0x0000bd    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+                  Move_It   0x0000bf    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+                 Move_End   0x0000c0    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+              Copy7CToSig   0x0000c1    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+            Copy7CToSig_1   0x0000c9    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+            CopyTempToPos   0x0000d2    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+            CopyPosToTemp   0x0000d5    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+           CopyPos1ToTemp   0x0000d8    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+           CopyPos2ToTemp   0x0000dd    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+           CopyTempToPos1   0x0000e2    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+           CopyTempToPos2   0x0000e7    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+               StartServo   0x0000ec    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+        SetMiddlePosition   0x0000fd    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+                 ClampInt   0x000102    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+               ClampInt_1   0x00010f    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+          ClampInt_tooLow   0x000119    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+         ClampInt_tooHigh   0x00011e    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/RCServoSWMachine.asm
+                 ClearRam   0x000123    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+              ClearRam_L2   0x00012e    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+                CopyToRam   0x000133    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+             CopyToRam_L1   0x000139    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+               SaveParams   0x000142    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+            SaveParams_L1   0x000148    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+                DecTimer4   0x000152    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+                DecTimer3   0x000154    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+                DecTimer2   0x000156    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+                DecTimer1   0x000158    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+                 DecTimer   0x000159    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+              TestT4_Zero   0x000165    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+              TestT3_Zero   0x000168    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+              TestT2_Zero   0x00016b    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+              TestT1_Zero   0x00016e    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+                Delay10uS   0x000171    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+               Delay100uS   0x000173    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+                Delay40uS   0x000175    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+                 DelayWuS   0x000176    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+            DelayWuS_Loop   0x000177    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+                  EEReadW   0x00017a    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+                   EERead   0x00017b    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+                 EEWriteW   0x000184    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+                  EEWrite   0x000185    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+              EEWriteLoop   0x000197    program     static /Projects/SM_Ctrl_RC_Servo/Firmware/F1822_Common.inc
+
+
