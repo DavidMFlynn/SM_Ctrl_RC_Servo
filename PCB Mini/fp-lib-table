@@ -1,0 +1,4 @@
+(fp_lib_table
+  (lib (name Relay)(type KiCad)(uri "$(KIPRJMOD)/modules/Relay.pretty")(options "")(descr ""))
+  (lib (name Wires)(type KiCad)(uri "$(KIPRJMOD)/modules/Wires.pretty")(options "")(descr ""))
+)
