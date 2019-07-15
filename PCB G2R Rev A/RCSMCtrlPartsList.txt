@@ -5,6 +5,7 @@ P2	Connector 3 pin .1cl
 
 K1,K2	Relay G2R 24VDC DPDT (1 or 2)
 
+U1	LM7805 DPAK
 IC1	Socket 8 pin dip (optional)
 IC1	PIC12F1822
 
