@@ -1,0 +1,61 @@
+Info: Backing up file “/Projects/SM_Ctrl_RC_Servo/PCB Mini/sym-lib-table” to file “/Projects/SM_Ctrl_RC_Servo/PCB Mini/rescue-backup/sym-lib-table-2019-07-13-21-21-59”.
+Info: Backing up file “/Projects/SM_Ctrl_RC_Servo/PCB Mini/RCSMCtrl.sch” to file “/Projects/SM_Ctrl_RC_Servo/PCB Mini/rescue-backup/RCSMCtrl-2019-07-13-21-21-59.sch”.
+Info: Backing up file “/Projects/SM_Ctrl_RC_Servo/PCB Mini/RCSMCtrl.pro” to file “/Projects/SM_Ctrl_RC_Servo/PCB Mini/rescue-backup/RCSMCtrl-2019-07-13-21-21-59.pro”.
+Info: Backing up file “/Projects/SM_Ctrl_RC_Servo/PCB Mini/RCSMCtrl-cache.lib” to file “/Projects/SM_Ctrl_RC_Servo/PCB Mini/rescue-backup/RCSMCtrl-cache-2019-07-13-21-21-59.lib”.
+Info: Backing up file “/Projects/SM_Ctrl_RC_Servo/PCB Mini/RCSMCtrl-rescue.lib” to file “/Projects/SM_Ctrl_RC_Servo/PCB Mini/rescue-backup/RCSMCtrl-rescue-2019-07-13-21-21-59.lib”.
+Info: Backing up file “/Projects/SM_Ctrl_RC_Servo/PCB Mini/RCSMCtrl-rescue.dcm” to file “/Projects/SM_Ctrl_RC_Servo/PCB Mini/rescue-backup/RCSMCtrl-rescue-2019-07-13-21-21-59.dcm”.
+Info: Adding library “RCSMCtrl-rescue”, file “${KIPRJMOD}/RCSMCtrl-rescue.lib” to project symbol library table.
+Symbol “PIC12(L)F1822-I_P” mapped to symbol library “RCSMCtrl-rescue”.
+Symbol “D” mapped to symbol library “Device”.
+Symbol “CP1_Small” mapped to symbol library “Device”.
+Symbol “C_Small” mapped to symbol library “Device”.
+Symbol “C_Small” mapped to symbol library “Device”.
+Symbol “LM7805CT” mapped to symbol library “RCSMCtrl-rescue”.
+Symbol “CONN_01X15” mapped to symbol library “RCSMCtrl-rescue”.
+Symbol “+5V” mapped to symbol library “power”.
+Symbol “GND” mapped to symbol library “power”.
+Symbol “+24V” mapped to symbol library “power”.
+Symbol “GND” mapped to symbol library “power”.
+Symbol “CONN_01X03” mapped to symbol library “RCSMCtrl-rescue”.
+Symbol “+5V” mapped to symbol library “power”.
+Symbol “GND” mapped to symbol library “power”.
+Symbol “R” mapped to symbol library “Device”.
+Symbol “+5V” mapped to symbol library “power”.
+Symbol “GND” mapped to symbol library “power”.
+Symbol “R” mapped to symbol library “Device”.
+Symbol “D” mapped to symbol library “Device”.
+Symbol “R” mapped to symbol library “Device”.
+Symbol “R” mapped to symbol library “Device”.
+Symbol “C_Small” mapped to symbol library “Device”.
+Symbol “Q_NPN_EBC” mapped to symbol library “Device”.
+Symbol “Q_PNP_EBC” mapped to symbol library “Device”.
+Symbol “R” mapped to symbol library “Device”.
+Symbol “GND” mapped to symbol library “power”.
+Symbol “+5V” mapped to symbol library “power”.
+Symbol “GND” mapped to symbol library “power”.
+Symbol “SW_PUSH” mapped to symbol library “RCSMCtrl-rescue”.
+Symbol “SW_PUSH” mapped to symbol library “RCSMCtrl-rescue”.
+Symbol “LED” mapped to symbol library “Device”.
+Symbol “LED” mapped to symbol library “Device”.
+Symbol “+5V” mapped to symbol library “power”.
+Symbol “R” mapped to symbol library “Device”.
+Symbol “R” mapped to symbol library “Device”.
+Symbol “R” mapped to symbol library “Device”.
+Symbol “R” mapped to symbol library “Device”.
+Symbol “GND” mapped to symbol library “power”.
+Symbol “D” mapped to symbol library “Device”.
+Symbol “D” mapped to symbol library “Device”.
+Symbol “GND” mapped to symbol library “power”.
+Symbol “+24V” mapped to symbol library “power”.
+Symbol “R” mapped to symbol library “Device”.
+Symbol “R” mapped to symbol library “Device”.
+Symbol “Q_NPN_EBC” mapped to symbol library “Device”.
+Symbol “D” mapped to symbol library “Device”.
+Symbol “D” mapped to symbol library “Device”.
+Symbol “GND” mapped to symbol library “power”.
+Symbol “+24V” mapped to symbol library “power”.
+Symbol “R” mapped to symbol library “Device”.
+Symbol “R” mapped to symbol library “Device”.
+Symbol “IM00” mapped to symbol library “RCSMCtrl-rescue”.
+Symbol “IM00” mapped to symbol library “RCSMCtrl-rescue”.
+Info: Symbol library table mapping complete!
