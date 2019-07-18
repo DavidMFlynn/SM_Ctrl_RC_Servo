@@ -3,9 +3,21 @@
 // by Dave Flynn
 // Filename:ServoSMBlock.scad
 // Created: 8/18/2018
-// Revision: 1.0d1 8/18/2018
+// Revision: 1.0a1 7/17/2019
 // Units: mm
 // **************************************************
+//  ***** History ******
+// 1.0a1 7/17/2019 RC1, Servo and PCB mount, Ball servo horn.
+// 1.0d1 8/18/2018 First rev'd version
+//
+// **************************************************
+//  ***** for STL output *****
+// Arm(L=37.5);
+// SMBlock();
+// SMBlock(PCBMount="G2RrA");
+// mirror([1,0,0]) SMBlock(PCBMount="G2RrA"); // Left side mount
+// **************************************************
+
 
 include<CommonStuffSAEmm.scad>
 include<LD-20MGServoLib.scad>
@@ -16,7 +28,7 @@ IDXtra=0.2;
 
 
 
-module Arm(L=30){
+module Arm(L=37.5){
 	// Arm for MG996R servo
 	//Ball_d=3/8*25.4;
 	Ball_d=5/16*25.4;
@@ -63,9 +75,20 @@ module Arm(L=30){
 	
 } // Arm
 
-//Arm();
+//Arm(L=37.5);
 
-module SMBlock(){
+module RoundRect(X=10,Y=10,Z=2,R=1){
+	hull(){
+	translate([-X/2+R,-Y/2+R,0]) cylinder(r=R,h=Z);
+	translate([X/2-R,-Y/2+R,0]) cylinder(r=R,h=Z);
+	translate([-X/2+R,Y/2-R,0]) cylinder(r=R,h=Z);
+	translate([X/2-R,Y/2-R,0]) cylinder(r=R,h=Z);
+	}
+} // RoundRect
+
+module SMBlock(PCBMount=""){
+	// or "G2RrA" or "G2RMini"
+	
 	Block_x=2.75*25.4;
 	Block_y=3.625*25.4;
 	Block_z=12; // 0.75*25.4;
@@ -84,16 +107,26 @@ module SMBlock(){
 	MH_x=1*25.4;
 	MH_y=1.875*25.4;
 	
+	// G2R Rev A
+	PCBG2RrA_X=2.3*25.4;
+	PCBG2RrA_Y=2.10*25.4;
+	PCBG2RrA_BC_X=1.80*25.4;
+	PCBG2RrA_Bolt_Y=0.20*25.4;
+	PCBG3RrA_Loc_Y=-14;
+
+	
 	// G2R Mini PCB
 	PCB_X=2.3*25.4;
 	PCB_Y=1.85*25.4;
 	PCB_BC_X=2.0*25.4;
 	PCB_Bolt_Y=0.15*25.4;
+	PCB_Loc_Y=-12;
 	
 	difference(){
 		union(){
 			hull(){
-				translate([0,0,(Block_z-BlockChamfer)/2]) cube([Block_x,Block_y,Block_z-BlockChamfer],center=true);
+				//translate([0,0,(Block_z-BlockChamfer)/2]) cube([Block_x,Block_y,Block_z-BlockChamfer],center=true);
+				RoundRect(X=Block_x,Y=Block_y,Z=Block_z-BlockChamfer,R=2);
 				translate([0,0,Block_z/2]) cube([Block_x-BlockChamfer*2,Block_y-BlockChamfer*2,Block_z],center=true);
 			} // hull
 			
@@ -108,17 +141,24 @@ module SMBlock(){
 		
 		//wire path
 		translate([Shaft_x,Shaft_y+11,2]) cylinder(d=8,h=30);
-		translate([Shaft_x,Shaft_y+9,4]) rotate([0,-45,0]) cylinder(d=8,h=30);
+		translate([Shaft_x,Shaft_y+11,4]) rotate([0,-45,0]) cylinder(d=8,h=30);
 		
 		// Servo
 		translate([Shaft_x,Shaft_y,Shaft_z-Servo_TopOfWheel]) rotate([0,0,90]) Servo_LD20MG(BottomMount=false,TopAccess=false);
-		
-		//PCB mount for RC servo controller
+		// remove servo bottom
+		translate([Shaft_x-10.25,Shaft_y-20-10,-Overlap]) cube([20.5,40.5,3]);
 	
+		// Remove extra
+		translate([-MH_x/2,-MH_y/2,-Overlap])hull(){
+			cylinder(d=22,h=Block_z+Overlap*2);
+			translate([0,20,0]) cylinder(d=22,h=Block_z+Overlap*2);
+		}
 	
 	} // diff
 	
-	translate([1,-12,Block_z-Overlap]){
+	//PCB mount for RC servo controller
+	if (PCBMount=="G2RMini")
+	translate([1,PCB_Loc_Y,Block_z-Overlap]){
 		difference(){
 			union(){
 				translate([-PCB_Bolt_Y,-PCB_BC_X/2,0])  hull(){
@@ -134,14 +174,34 @@ module SMBlock(){
 			translate([-PCB_Bolt_Y,PCB_BC_X/2,PCB_Bolt_Y+1]) rotate([0,-90,0])Bolt6Hole();}
 		} // diff
 	
+	if (PCBMount=="G2RrA")
+	translate([1,PCBG3RrA_Loc_Y,Block_z-Overlap]){
+		difference(){
+			union(){
+				translate([-PCBG2RrA_Bolt_Y,-PCBG2RrA_BC_X/2,0])  hull(){
+					translate([0,0,PCBG2RrA_Bolt_Y+1]) rotate([0,90,0]) cylinder(d=8,h=6);
+					translate([0,-5,0]) cube([6,10,1]);}
+					
+				translate([-PCBG2RrA_Bolt_Y,PCBG2RrA_BC_X/2,0])  hull(){
+					translate([0,0,PCBG2RrA_Bolt_Y+1]) rotate([0,90,0]) cylinder(d=8,h=6);
+					translate([0,-5,0]) cube([6,10,1]);}
+			} // union
 		
-	// PCB
-	//translate([-3,-12,0])
+			translate([-PCBG2RrA_Bolt_Y,-PCBG2RrA_BC_X/2,PCBG2RrA_Bolt_Y+1]) rotate([0,-90,0]) Bolt6Hole();
+			translate([-PCBG2RrA_Bolt_Y,PCBG2RrA_BC_X/2,PCBG2RrA_Bolt_Y+1]) rotate([0,-90,0]) Bolt6Hole();}
+		} // diff
+		
+	// PCB G2R Mini
+	//translate([-3,PCB_Loc_Y,0])
 	//translate([0,-PCB_X/2,Block_z]) color("Red") rotate([0,-90,0]) cube([PCB_Y,PCB_X,1.5]);
 	
+		// PCB G2R Rev A
+	//translate([-4.5,PCBG3RrA_Loc_Y,0])
+	//translate([0,-PCBG2RrA_X/2,Block_z]) color("Red") rotate([0,-90,0]) cube([PCBG2RrA_Y,PCBG2RrA_X,1.5]);
+
 } // SMBlock
 
-SMBlock();
+//SMBlock();
 
 module HPRRSMBlock(){
 	Block_x=2.75*25.4;
