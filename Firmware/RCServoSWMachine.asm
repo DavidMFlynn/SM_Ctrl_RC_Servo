@@ -24,6 +24,11 @@
 ;
 ;====================================================================================================
 ; Options
+;====================================================================================================
+; To Do's
+;
+; Move slowly. Compare dest w/ current adjust current to be dest.
+; Adjust by 40counts / pulse = max move time 1 second
 ;
 ;====================================================================================================
 ;====================================================================================================
@@ -104,9 +109,9 @@ CCP1CON_Clr	EQU	b'00001001'	;Clear output on match
 CCP1CON_Set	EQU	b'00001000'	;Set output on match
 ;
 kOffsetCtrValue	EQU	d'2047'
-kMinPulseWidth	EQU	d'2200'	;1100uS
+kMinPulseWidth	EQU	d'1800'	;900uS
 kMidPulseWidth	EQU	d'3000'	;1500uS
-kMaxPulseWidth	EQU	d'3800'	;1900uS
+kMaxPulseWidth	EQU	d'4200'	;2100uS
 kServoDwellTime	EQU	d'40000'	;20mS
 ;
 ;====================================================================================================
@@ -182,6 +187,8 @@ DebounceTime	EQU	d'10'
 	Timer4Lo		;4th 16 bit timer
 	Timer4Hi		; debounce timer
 ;
+	Dest:2
+;
 	Position1:2
 	Position2:2
 	SysFlags
@@ -190,6 +197,7 @@ DebounceTime	EQU	d'10'
 ;
 	endc
 ;
+#Define	PulseSent	SysFlags,0
 ;
 #Define	FirstRAMParam	Position1
 #Define	LastRAMParam	SysFlags
@@ -354,16 +362,15 @@ IRQ_Servo1	MOVLB	0	;bank 0
 	CLRF	CCP1CON
 	GOTO	IRQ_Servo1_X
 ;
-IRQ_Servo1_1	MOVLB	0x05                   ;Bank 5
+IRQ_Servo1_1	BSF	PulseSent
+	MOVLB	0x05                   ;Bank 5
 	BTFSC	CCP1CON,CCP1M0	;Set output on match?
 	GOTO	IRQ_Servo1_OL	; No
 ; An output just went high
 ;
 	MOVF	SigOutTime,W	;Put the pulse into the CCP reg.
-;	MOVLW	LOW kMidPulseWidth	;tc
 	ADDWF	CCPR1L,F
 	MOVF	SigOutTime+1,W
-;	MOVLW	HIGH kMidPulseWidth	;tc
 	ADDWFC	CCPR1H,F
 	MOVLW	CCP1CON_Clr	;Clear output on match
 	MOVWF	CCP1CON	;CCP1 clr on match
