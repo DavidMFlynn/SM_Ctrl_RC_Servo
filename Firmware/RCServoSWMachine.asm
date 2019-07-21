@@ -1,8 +1,8 @@
 ;====================================================================================================
 ;
 ;   Filename:	RCServoSWMachine.asm
-;   Date:	9/18/2017
-;   File Version:	1.0b1
+;   Date:	7/20/2019
+;   File Version:	1.0b2
 ;
 ;    Author:	David M. Flynn
 ;    Company:	Oxford V.U.E., Inc.
@@ -14,6 +14,8 @@
 ;
 ;    History:
 ;
+; 1.0b2   7/20/2019	Delay at startup at mid point for 3 seconds, Slower motion for lower power.
+; 	Stop senting pulses after in position for 0.5s.
 ; 1.0b1   9/18/2017    RC1, Looks like it works.
 ; 1.0d1   2/24/2016	Copied from RCServoTester1822
 ; 1.0a4   11/16/2015	Works as a servo tester w/ the PCB.  I2C is not tested/working.
@@ -28,14 +30,15 @@
 ; To Do's
 ;
 ; Move slowly. Compare dest w/ current adjust current to be dest.
-; Adjust by 40counts / pulse = max move time 1 second
+; Adjust by 16counts / 0.01 seconds
 ;
 ;====================================================================================================
 ;====================================================================================================
 ; What happens next:
 ;
 ;   The system LED blinks once per second
-;   Once at power-up: 
+;  Once at power-up: 
+;   Set position to center for 3 seconds.
 ;
 ;  Setup mode:
 ;   If SW1 is pressed Increment the set value for the control condition.
@@ -46,9 +49,11 @@
 ;   else if Control is Low (Normal, Inactive)
 ;      move to set point 2 turn off feedback, Aux and Relays
 ;
-;   CCP1 outputs a 1100uS to 1900uS (2200..3600 counts) pulse every 16,000uS
+;   CCP1 outputs a 900uS to 2100uS (1800..4200 counts) pulse every 16,000uS
 ;
 ;   Resolution is 0.5uS
+;
+;  if kInPosShutdown is set servo will power down after 0.5s
 ;
 ;====================================================================================================
 ;
@@ -107,12 +112,16 @@
 ; 0.5uS res counter from 8MHz OSC
 CCP1CON_Clr	EQU	b'00001001'	;Clear output on match
 CCP1CON_Set	EQU	b'00001000'	;Set output on match
+CCP1CON_Int	EQU	b'00001010'
 ;
 kOffsetCtrValue	EQU	d'2047'
 kMinPulseWidth	EQU	d'1800'	;900uS
 kMidPulseWidth	EQU	d'3000'	;1500uS
 kMaxPulseWidth	EQU	d'4200'	;2100uS
+kDefaultPosition1	EQU	kMidPulseWidth+d'200'
+kDefaultPosition2	EQU	kMidPulseWidth-d'200'
 kServoDwellTime	EQU	d'40000'	;20mS
+kInPosShutdown	EQU	b'00000010'	;b'00000010' enabled 0x00 disabled
 ;
 ;====================================================================================================
 	nolist
@@ -188,6 +197,7 @@ DebounceTime	EQU	d'10'
 	Timer4Hi		; debounce timer
 ;
 	Dest:2
+	CurPos:2
 ;
 	Position1:2
 	Position2:2
@@ -198,6 +208,8 @@ DebounceTime	EQU	d'10'
 	endc
 ;
 #Define	PulseSent	SysFlags,0
+#Define	InPosShutdown	SysFlags,1
+#Define	InPosition	SysFlags,2
 ;
 #Define	FirstRAMParam	Position1
 #Define	LastRAMParam	SysFlags
@@ -215,7 +227,7 @@ DebounceTime	EQU	d'10'
 	SigOutTime
 	SigOutTimeH
 	Flags
-;Globals from I2C_SLAVE.inc
+;
 	Param73
 	Param74
 ;
@@ -255,12 +267,12 @@ HasISR	EQU	0x80	;used to enable interupts 0x80=true 0x00=false
 ; EEPROM locations (NV-RAM) 0x00..0x7F (offsets)
 	org	0xF000
 ;
-	de	LOW kMidPulseWidth	;nvPosition1Lo
-	de	HIGH kMidPulseWidth
-	de	LOW kMidPulseWidth
-	de	HIGH kMidPulseWidth
+	de	LOW kDefaultPosition1	;nvPosition1Lo
+	de	HIGH kDefaultPosition1
+	de	LOW kDefaultPosition2
+	de	HIGH kDefaultPosition2
 ;
-	de	0x00
+	de	kInPosShutdown	;nvSysFlags
 ;
 	cblock	0x00
 	nvPosition1Lo
@@ -354,6 +366,7 @@ IRQ_Servo1	MOVLB	0	;bank 0
 	BTFSS	PIR1,CCP1IF
 	GOTO	IRQ_Servo1_End
 ;
+	BSF	PulseSent
 	BTFSS	ServoOff	;Are we sending a pulse?
 	GOTO	IRQ_Servo1_1	; Yes
 ;
@@ -362,8 +375,7 @@ IRQ_Servo1	MOVLB	0	;bank 0
 	CLRF	CCP1CON
 	GOTO	IRQ_Servo1_X
 ;
-IRQ_Servo1_1	BSF	PulseSent
-	MOVLB	0x05                   ;Bank 5
+IRQ_Servo1_1	MOVLB	0x05                   ;Bank 5
 	BTFSC	CCP1CON,CCP1M0	;Set output on match?
 	GOTO	IRQ_Servo1_OL	; No
 ; An output just went high
@@ -372,7 +384,13 @@ IRQ_Servo1_1	BSF	PulseSent
 	ADDWF	CCPR1L,F
 	MOVF	SigOutTime+1,W
 	ADDWFC	CCPR1H,F
+	movlb	0	;Bank 0
+	movlw	CCP1CON_Int
+	btfss	InPosShutdown
 	MOVLW	CCP1CON_Clr	;Clear output on match
+	btfss	InPosition
+	MOVLW	CCP1CON_Clr	;Clear output on match
+	movlb	5	;Bank 5
 	MOVWF	CCP1CON	;CCP1 clr on match
 ;Calculate dwell time
 	MOVLW	LOW kServoDwellTime
@@ -391,8 +409,14 @@ IRQ_Servo1_OL	MOVLW	LOW kServoDwellTime
 	MOVLW	HIGH kServoDwellTime
 	ADDWFC	CCPR1H,F
 ;
-	MOVLW	CCP1CON_Set	;Set output on match
-	MOVWF	CCP1CON
+	movlb	0	;Bank 0
+	movlw	CCP1CON_Int
+	btfss	InPosShutdown
+	MOVLW	CCP1CON_Set	;Set output on match	
+	btfss	InPosition
+	MOVLW	CCP1CON_Set	;Set output on match	
+	movlb	5	;Bank 5
+	MOVWF	CCP1CON	;Idle output low
 ;
 IRQ_Servo1_X	MOVLB	0x00                   ;Bank 0
 	BCF	PIR1,CCP1IF
@@ -487,42 +511,46 @@ start	MOVLB	0x01	; select bank 1
 	CALL	StartServo
 ;=========================================================================================
 ;
+BtnChangeRate	EQU	0x02	;change by 1uS per 0.05 seconds
+SlewChangeRate	EQU	0x10	;change by 5uS per 0.01 seconds
+;
 MainLoop	CLRWDT
 	MOVLB	0x00                   ;Bank 0
 ;
 ; Handle Inc/Dec buttons
-	movf	Timer4Lo,F
-	SKPZ
-	bra	ML_Btns_End
-	btfss	IncBtnFlag
-	bra	ML_Btns_Dec
+	movf	Timer4Lo,W
+	iorwf	Timer4Hi,W
+	SKPZ		;Timer4 == 0?
+	bra	ML_Btns_End	; No
+	btfss	IncBtnFlag	;Inc button is down?
+	bra	ML_Btns_Dec	; No
 ;
 	call	CopyPosToTemp
-	movlw	0x01
+	movlw	BtnChangeRate
 	addwf	Param7C,F
-	clrw
-	addwfc	Param7D
+	movlw	0x00
+	addwfc	Param7D,F
 	call	ClampInt
 	call	CopyTempToPos
 	bsf	DataChangedFlag
 ;
-	movlw	0x05
+	movlw	0x05	; 0.05 seconds
 	movwf	Timer4Lo
 	bra	ML_Btns_End
 ;
-ML_Btns_Dec	btfss	DecBtnFlag
-	bra	ML_Btns_End
+ML_Btns_Dec	btfss	DecBtnFlag	;Dec button is down?
+	bra	ML_Btns_End	; No
 ;
 	call	CopyPosToTemp
-	movlw	0x01
+	movlw	BtnChangeRate
 	subwf	Param7C,F
-	clrw
-	subwfb	Param7D
+	movlw	0x00
+	subwfb	Param7D,F
 	call	ClampInt
 	call	CopyTempToPos
 	bsf	DataChangedFlag
 ;	
-	movlw	0x05
+	movlw	0x05	; 0.05 seconds
 	movwf	Timer4Lo
 ML_Btns_End:
 	btfsc	DataChangedFlag
@@ -530,30 +558,34 @@ ML_Btns_End:
 	bcf	DataChangedFlag
 ;
 ;-------------------------
+; Set Dest
+	movf	Timer3Lo,W	;Don't move for startup time
+	iorwf	Timer3Hi,W
+	SKPZ		;Timer3 == 0?
+	bra	Set_Dest_End	; No
 ;
-	btfss	NewSWData
-	bra	Move_End
+	btfss	NewSWData	;10mS interval passed?
+	bra	Set_Dest_End	; No
 	bcf	NewSWData
 ;	
-	btfss	CmdInputBit
-	bra	ML_CmdNormal
-; debounce
+	btfss	CmdInputBit	;Contorl signal active?
+	bra	ML_CmdNormal	; No
+; debounce, don't change until we've seen the input 5 times
 	movlw	0x05
 	subwf	Debounce,W
-	SKPZ
-	bra	Rev_Debounce
+	SKPZ		;5 times?
+	bra	Rev_Debounce	; No
 ;	
-	movlb	2	;Bank 2
+	movlb	2	;Bank 2 for LATA
 	bsf	RelayDrvrBit
 	bsf	FeedbackBit
 	movlb	0	;Bank0
 	bsf	SMRevFlag
 	bsf	LED2Flag
-	call	CopyPos2ToTemp
 	bra	Move_It
 ;
 Rev_Debounce	incf	Debounce,F
-	bra	Move_End
+	bra	Set_Dest_End
 ;
 ML_CmdNormal	movf	Debounce,F
 	SKPZ
@@ -565,13 +597,90 @@ ML_CmdNormal	movf	Debounce,F
 	movlb	0	;Bank 0
 	bcf	SMRevFlag
 	bcf	LED2Flag
-	call	CopyPos1ToTemp
 	bra	Move_It
 ;
 Norm_Debounce	decf	Debounce,F
-	bra	Move_End
+	bra	Set_Dest_End
 ;
-Move_It:
+Move_It	call	CopyPosToDest
+;
+Set_Dest_End:
+;
+;---------------------
+; Move CurPos toward Dest
+	movlb	0	;Bank 0
+	btfss	PulseSent
+	bra	Move_End
+	bcf	PulseSent
+;
+	movf	Dest,W
+	subwf	CurPos,W
+	movwf	Param78
+	movf	Dest+1,W
+	subwfb	CurPos+1,W
+	iorwf	Param78,F
+	SKPZ		;Dest == CurPos?
+	bra	Move_It_NIP
+	movf	Timer2Lo,F
+	SKPNZ
+	bsf	InPosition
+	bra	Move_It_Now	; Yes
+;
+Move_It_NIP	movlw	.50
+	movwf	Timer2Lo
+	bcf	InPosition
+;
+	movf	Dest,W
+	movwf	Param78
+	movf	Dest+1,W
+	movwf	Param79
+;
+	movf	CurPos,W
+	movwf	Param7C
+	movf	CurPos+1,W
+	movwf	Param7D
+;
+	call	Param7D_LE_Param79
+	btfss	Param77,0	;CurPos<=Dest?
+	bra	Move_It_Neg	; No, CurPos>Dest
+;CurPos<Dest, so move CurPos positive
+	movlw	SlewChangeRate
+	addwf	Param7C,F
+	movlw	0x00
+	addwfc	Param7D,F
+	call	Param7D_LE_Param79
+	btfss	Param77,0	;CurPos<=Dest Still?
+	bra	Move_It_Dest	; No, CurPos>Dest
+			; Yes, CurPos+=SlewChangeRate
+;
+; make the calculated position the current position
+Move_It_New	movf	Param7C,W
+	movwf	CurPos
+	movf	Param7D,W
+	movwf	CurPos+1
+	bra	Move_It_Now
+;	
+Move_It_Neg
+	movlw	SlewChangeRate
+	subwf	Param7C,F
+	movlw	0x00
+	subwfb	Param7D,F
+	call	Param7D_LE_Param79
+	btfsc	Param77,0	;CurPos<=Dest now?
+	bra	Move_It_Dest	; Yes, CurPos<=Dest
+	bra	Move_It_New
+;
+; make the current position the destination
+Move_It_Dest	movf	Dest,W
+	movwf	CurPos
+	movf	Dest+1,W
+	movwf	CurPos+1
+;	
+Move_It_Now:
+	movf	CurPos,W
+	movwf	Param7C
+	movf	CurPos+1,W
+	movwf	Param7D
 	CALL	Copy7CToSig
 Move_End:
 ;
@@ -579,8 +688,10 @@ Move_End:
 ;
 ;========================================================================================
 ; Param7D:Param7C >> SigOutTimeH:SigOutTime
+; Entry: Param7D:Param7C
 ;
 ; Don't disable interrupts if you don't need to...
+; If Param7D:Param7C == SigOutTimeH:SigOutTime then return
 Copy7CToSig	MOVF	Param7C,W
 	SUBWF	SigOutTime,W
 	SKPZ
@@ -590,6 +701,7 @@ Copy7CToSig	MOVF	Param7C,W
 	SKPNZ
 	Return
 ;
+;SigOutTimeH:SigOutTime = Param7D:Param7C
 Copy7CToSig_1	bcf	INTCON,GIE
 	btfsc	INTCON,GIE
 	bra	Copy7CToSig_1
@@ -610,6 +722,26 @@ CopyTempToPos	btfss	SMRevFlag
 CopyPosToTemp	btfss	SMRevFlag
 	bra	CopyPos1ToTemp
 	bra	CopyPos2ToTemp
+;
+CopyPosToDest	btfss	SMRevFlag
+	bra	CopyPos1ToDest
+	bra	CopyPos2ToDest
+;
+;====================================
+;
+CopyPos1ToDest	movf	Position1+1,W
+	movwf	Dest+1
+	movf	Position1,W
+	movwf	Dest
+	return
+;
+;=====================================
+;
+CopyPos2ToDest	movf	Position2+1,W
+	movwf	Dest+1
+	movf	Position2,W
+	movwf	Dest
+	return
 ;
 ;====================================
 ;
@@ -664,13 +796,22 @@ StartServo	MOVLB	0	;bank 0
 	MOVLW	CCP1CON_Set
 	MOVWF	CCP1CON	;go high on match
 	MOVLB	0x00	;Bank 0
+	movlw	low .300	;Do nothing for 3 seconds
+	movwf	Timer4Lo
+	movwf	Timer3Lo
+	movlw	high .300
+	movwf	Timer4Hi
+	movwf	Timer3Hi
 	RETURN
 ;
-; Don't disable interrupts if you don't need to...
 SetMiddlePosition	MOVLW	LOW kMidPulseWidth
 	MOVWF	Param7C
+	movwf	Dest
+	movwf	CurPos
 	MOVLW	HIGH kMidPulseWidth
 	MOVWF	Param7D
+	movwf	Dest+1
+	movwf	CurPos+1
 	Return
 ;
 ;=========================================================================================
@@ -716,6 +857,29 @@ ClampInt_tooHigh	MOVLW	low kMaxPulseWidth
 	MOVWF	Param7D
 	RETURN
 ;
+;=====================================================================================
+; Less or Equal
+;
+; Entry: Param7D:Param7C, Param79:Param78
+; Exit: Param77:0=Param7D:Param7C<=Param79:Param78
+;
+Param7D_LE_Param79	CLRF	Param77	;default to >
+	MOVF	Param79,W
+	SUBWF	Param7D,W	;Param7D-Param79
+	SKPNB		;Param7D<Param79?
+	GOTO	SetTrue	; Yes
+	SKPZ		;Param7D>Param79?
+	RETURN		; Yes
+	MOVF	Param78,W	; No, MSB is a match
+	SUBWF	Param7C,W	;Param7C-Param78
+	SKPNB		;Param7C<Param78?
+	GOTO	SetTrue	; Yes
+	SKPZ		;LSBs then same?
+	RETURN		; No
+;
+SetTrue	BSF	Param77,0
+	RETURN
+;
 	if oldCode
 ;=========================================================================================
 ;=====================================================================================
@@ -754,29 +918,6 @@ MoveFrom7C	MOVWF	FSR0L
 	INCF	FSR0L,F
 	MOVF	Param7D,W
 	MOVWF	INDF0
-	RETURN
-;
-;=====================================================================================
-; Less or Equal
-;
-; Entry: Param7D:Param7C, Param79:Param78
-; Exit: Param77:0=Param7D:Param7C<=Param79:Param78
-;
-Param7D_LE_Param79	CLRF	Param77	;default to >
-	MOVF	Param79,W
-	SUBWF	Param7D,W	;Param7D-Param79
-	SKPNB		;Param7D<Param79?
-	GOTO	SetTrue	; Yes
-	SKPZ		;Param7D>Param79?
-	RETURN		; Yes
-	MOVF	Param78,W	; No, MSB is a match
-	SUBWF	Param7C,W	;Param7C-Param78
-	SKPNB		;Param7C<Param78?
-	GOTO	SetTrue	; Yes
-	SKPZ		;LSBs then same?
-	RETURN		; No
-;
-SetTrue	BSF	Param77,0
 	RETURN
 ;
 ;=====================================================================================
