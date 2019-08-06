@@ -133,8 +133,8 @@ DecTimer1	movlw	Timer1Hi
 ;DecTimer
 ; entry: FSR=Timer(n)Hi
 DecTimer	MOVWF	FSR0L
-	MOVF	INDF0,W	;TimerNHi
-	DECF	FSR0L,F
+	CLRF	FSR0H	;Timers must be in bank 0
+	moviw	FSR0--	;TimerNHi
 	IORWF	INDF0,W	;TimerNLo
 	SKPNZ
 	RETURN
@@ -163,7 +163,7 @@ TestT2_Zero	movf	Timer2Lo,W
 ;
 TestT1_Zero	movf	Timer1Lo,W
 	iorwf	Timer1Hi,W
-	return	
+	return
 ;
 ;======================================================================================
 ;Delay uS    1 cycle = 1uS, 8Mhz clock version
@@ -203,7 +203,7 @@ EERead	MOVF	EEAddrTemp,W	;Data Memory
 	MOVF	EEDATL,W	;W = EEDATL
 	MOVLB	0x00	;Bank 0
 	return
-;	
+;
 ;==============================================================================================
 ; Write EEPROM
 ; entry: EEPROM address to write in W
@@ -287,7 +287,7 @@ RX_TheByte_Err	MOVF	RCREG,W	;bad byte so drop it
 StoreSerIn	MOVWF	Param78
 	MOVLB	Ser_Buff_Bank
 	INCF	Ser_In_Bytes,F
-;	
+;
 	MOVF	Ser_In_InPtr,W
 	ANDLW	0x1F
 	INCF	Ser_In_InPtr,F
@@ -344,7 +344,7 @@ GetSerOutBytes	MOVLB	Ser_Buff_Bank
 StoreSerOut	MOVWF	Param78
 	MOVLB	Ser_Buff_Bank
 	INCF	Ser_Out_Bytes,F
-;	
+;
 	MOVF	Ser_Out_InPtr,W
 	ANDLW	0x1F
 	INCF	Ser_Out_InPtr,F

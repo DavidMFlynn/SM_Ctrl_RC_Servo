@@ -1,8 +1,8 @@
 ;====================================================================================================
 ;
 ;   Filename:	RCServoSWMachine.asm
-;   Date:	7/20/2019
-;   File Version:	1.0b2
+;   Date:	8/5/2019
+;   File Version:	1.0b3
 ;
 ;    Author:	David M. Flynn
 ;    Company:	Oxford V.U.E., Inc.
@@ -14,6 +14,7 @@
 ;
 ;    History:
 ;
+; 1.0b3   8/5/2019	Added move to center when both buttons are pressed.
 ; 1.0b2   7/20/2019	Delay at startup at mid point for 3 seconds, Slower motion for lower power.
 ; 	Stop senting pulses after in position for 0.5s.
 ; 1.0b1   9/18/2017    RC1, Looks like it works.
@@ -37,7 +38,7 @@
 ; What happens next:
 ;
 ;   The system LED blinks once per second
-;  Once at power-up: 
+;  Once at power-up:
 ;   Set position to center for 3 seconds.
 ;
 ;  Setup mode:
@@ -178,7 +179,7 @@ DebounceTime	EQU	d'10'
 ;
 	ISR_Temp		;scratch mem
 	LED_Time
-	LED2_Time	
+	LED2_Time
 	LED_Ticks		;Timer tick count
 	LED2_Ticks
 ;
@@ -310,7 +311,7 @@ HasISR	EQU	0x80	;used to enable interupts 0x80=true 0x00=false
 	bcf	PIR1,TMR2IF	; reset interupt flag bit
 ;
 ;Decrement timers until they are zero
-; 
+;
 	CLRF	FSR0H
 	call	DecTimer1	;if timer 1 is not zero decrement
 	call	DecTimer2
@@ -412,9 +413,9 @@ IRQ_Servo1_OL	MOVLW	LOW kServoDwellTime
 	movlb	0	;Bank 0
 	movlw	CCP1CON_Int
 	btfss	InPosShutdown
-	MOVLW	CCP1CON_Set	;Set output on match	
+	MOVLW	CCP1CON_Set	;Set output on match
 	btfss	InPosition
-	MOVLW	CCP1CON_Set	;Set output on match	
+	MOVLW	CCP1CON_Set	;Set output on match
 	movlb	5	;Bank 5
 	MOVWF	CCP1CON	;Idle output low
 ;
@@ -441,8 +442,8 @@ start	MOVLB	0x01	; select bank 1
 	MOVLW	OSCCON_Value
 	MOVWF	OSCCON
 	movlw	b'00010111'	; WDT prescaler 1:65536 period is 2 sec (RESET value)
-	movwf	WDTCON 	
-;	
+	movwf	WDTCON
+;
 	MOVLB	0x03	; bank 3
 	CLRF	ANSELA	;Digital
 ;
@@ -525,7 +526,18 @@ MainLoop	CLRWDT
 	btfss	IncBtnFlag	;Inc button is down?
 	bra	ML_Btns_Dec	; No
 ;
-	call	CopyPosToTemp
+	btfss	DecBtnFlag	;Dec button is down?
+	bra	ML_Btns_Inc	; No
+; Handle both buttons, move to center
+	movlw	low kMidPulseWidth
+	movwf	Dest
+	movlw	high kMidPulseWidth
+	movwf	Dest+1
+	bcf	DataChangedFlag
+	bra	Set_Dest_End
+;
+; Handle INC button
+ML_Btns_Inc	call	CopyPosToTemp
 	movlw	BtnChangeRate
 	addwf	Param7C,F
 	movlw	0x00
@@ -539,8 +551,9 @@ MainLoop	CLRWDT
 	bra	ML_Btns_End
 ;
 ML_Btns_Dec	btfss	DecBtnFlag	;Dec button is down?
-	bra	ML_Btns_End	; No
+	bra	ML_Btns_Save	; No
 ;
+; Handle DEC button
 	call	CopyPosToTemp
 	movlw	BtnChangeRate
 	subwf	Param7C,F
@@ -549,25 +562,23 @@ ML_Btns_Dec	btfss	DecBtnFlag	;Dec button is down?
 	call	ClampInt
 	call	CopyTempToPos
 	bsf	DataChangedFlag
-;	
+;
 	movlw	0x05	; 0.05 seconds
 	movwf	Timer4Lo
-ML_Btns_End:
-	btfsc	DataChangedFlag
+	bra	ML_Btns_End
+
+ML_Btns_Save	btfsc	DataChangedFlag
 	call	SaveParams
 	bcf	DataChangedFlag
+ML_Btns_End:
 ;
 ;-------------------------
 ; Set Dest
-	movf	Timer3Lo,W	;Don't move for startup time
-	iorwf	Timer3Hi,W
-	SKPZ		;Timer3 == 0?
-	bra	Set_Dest_End	; No
 ;
 	btfss	NewSWData	;10mS interval passed?
 	bra	Set_Dest_End	; No
 	bcf	NewSWData
-;	
+;
 	btfss	CmdInputBit	;Contorl signal active?
 	bra	ML_CmdNormal	; No
 ; debounce, don't change until we've seen the input 5 times
@@ -575,7 +586,7 @@ ML_Btns_End:
 	subwf	Debounce,W
 	SKPZ		;5 times?
 	bra	Rev_Debounce	; No
-;	
+;
 	movlb	2	;Bank 2 for LATA
 	bsf	RelayDrvrBit
 	bsf	FeedbackBit
@@ -659,7 +670,7 @@ Move_It_New	movf	Param7C,W
 	movf	Param7D,W
 	movwf	CurPos+1
 	bra	Move_It_Now
-;	
+;
 Move_It_Neg
 	movlw	SlewChangeRate
 	subwf	Param7C,F
@@ -675,7 +686,7 @@ Move_It_Dest	movf	Dest,W
 	movwf	CurPos
 	movf	Dest+1,W
 	movwf	CurPos+1
-;	
+;
 Move_It_Now:
 	movf	CurPos,W
 	movwf	Param7C
@@ -710,7 +721,7 @@ Copy7CToSig_1	bcf	INTCON,GIE
 	MOVF	Param7D,W
 	MOVWF	SigOutTimeH
 	bsf	INTCON,GIE
-;	
+;
 	RETURN
 ;
 ;=========================================================================
@@ -782,7 +793,26 @@ StartServo	MOVLB	0	;bank 0
 	RETURN
 	BCF	ServoOff
 ;
-	CALL	SetMiddlePosition
+; Initialize to commanded position
+	btfss	CmdInputBit	;Contorl signal active?
+	bra	SS_CmdNormal	; No
+	movlb	2	;Bank 2 for LATA
+	bsf	RelayDrvrBit
+	bsf	FeedbackBit
+	movlb	0	;Bank0
+	bsf	SMRevFlag
+	bsf	LED2Flag
+	bra	SS_Move_It
+;
+SS_CmdNormal	movlb	2	;Bank 2
+	bcf	RelayDrvrBit
+	bcf	FeedbackBit
+	movlb	0	;Bank 0
+	bcf	SMRevFlag
+	bcf	LED2Flag
+;
+SS_Move_It	call	CopyPosToDest
+	call	SetDestAsCur
 	CALL	Copy7CToSig
 ;
 	MOVLW	0x00	;start in 0x100 clocks
@@ -798,10 +828,8 @@ StartServo	MOVLB	0	;bank 0
 	MOVLB	0x00	;Bank 0
 	movlw	low .300	;Do nothing for 3 seconds
 	movwf	Timer4Lo
-	movwf	Timer3Lo
 	movlw	high .300
 	movwf	Timer4Hi
-	movwf	Timer3Hi
 	RETURN
 ;
 SetMiddlePosition	MOVLW	LOW kMidPulseWidth
@@ -811,6 +839,14 @@ SetMiddlePosition	MOVLW	LOW kMidPulseWidth
 	MOVLW	HIGH kMidPulseWidth
 	MOVWF	Param7D
 	movwf	Dest+1
+	movwf	CurPos+1
+	Return
+;
+SetDestAsCur	movf	Dest,W
+	MOVWF	Param7C
+	movwf	CurPos
+	movf	Dest+1,W
+	MOVWF	Param7D
 	movwf	CurPos+1
 	Return
 ;
@@ -844,7 +880,7 @@ ClampInt_1	MOVLW	high kMinPulseWidth
 	SUBWF	Param7C,W	;7C-kMinPulseWidth
 	SKPB		;7C>=Min?
 	RETURN		; Yes
-;	
+;
 ClampInt_tooLow	MOVLW	low kMinPulseWidth
 	MOVWF	Param7C
 	MOVLW	high kMinPulseWidth
@@ -951,7 +987,7 @@ EqualMin	CLRF	Param77
 	SKPNZ
 	BSF	Param77,0
 	RETURN
-	
+
 ;
 Subtract1000	MOVLW	low kMinPulseWidth
 	SUBWF	Param7C,F
