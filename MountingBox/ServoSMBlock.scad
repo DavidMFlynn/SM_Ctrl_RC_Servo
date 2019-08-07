@@ -3,10 +3,12 @@
 // by Dave Flynn
 // Filename:ServoSMBlock.scad
 // Created: 8/18/2018
-// Revision: 1.0a1 7/17/2019
+// Revision: 1.0b1 8/6/2019
 // Units: mm
 // **************************************************
 //  ***** History ******
+// 1.0b1 8/6/2019 Added #6 screw hole for wire strain relief.
+// 1.0a2 8/4/2019 Common mounting for PCB.
 // 1.0a1 7/17/2019 RC1, Servo and PCB mount, Ball servo horn.
 // 1.0d1 8/18/2018 First rev'd version
 //
@@ -14,6 +16,8 @@
 //  ***** for STL output *****
 // Arm(L=37.5);
 // SMBlock();
+// SMBlock(PCBMount="Both");
+// mirror([1,0,0]) SMBlock(PCBMount="Both"); // Left side mount
 // SMBlock(PCBMount="G2RrA");
 // mirror([1,0,0]) SMBlock(PCBMount="G2RrA"); // Left side mount
 // **************************************************
@@ -86,8 +90,8 @@ module RoundRect(X=10,Y=10,Z=2,R=1){
 	}
 } // RoundRect
 
-module SMBlock(PCBMount=""){
-	// or "G2RrA" or "G2RMini"
+module SMBlock(PCBMount="Both"){
+	// or "G2RrA" or "G2RMini" or "Both"
 	
 	Block_x=2.75*25.4;
 	Block_y=3.625*25.4;
@@ -111,8 +115,8 @@ module SMBlock(PCBMount=""){
 	PCBG2RrA_X=2.3*25.4;
 	PCBG2RrA_Y=2.10*25.4;
 	PCBG2RrA_BC_X=1.80*25.4;
-	PCBG2RrA_Bolt_Y=0.20*25.4;
-	PCBG3RrA_Loc_Y=-14;
+	PCBG2RrA_Bolt_Y=0.15*25.4;
+	PCBG3RrA_Loc_Y=-Block_y/2+8;
 
 	
 	// G2R Mini PCB
@@ -120,7 +124,7 @@ module SMBlock(PCBMount=""){
 	PCB_Y=1.85*25.4;
 	PCB_BC_X=2.0*25.4;
 	PCB_Bolt_Y=0.15*25.4;
-	PCB_Loc_Y=-12;
+	PCB_Loc_Y=-Block_y/2+8;
 	
 	difference(){
 		union(){
@@ -138,6 +142,10 @@ module SMBlock(PCBMount=""){
 		// mounting holes
 		translate([-MH_x/2,MH_y/2,Block_z]) Bolt6ClearHole(depth=Block_z);
 		translate([MH_x/2,-MH_y/2,Block_z]) Bolt6ClearHole(depth=Block_z);
+		
+		// ty-wrap screw
+		translate([-MH_x/2,MH_y/2+15,Block_z]) Bolt6Hole(depth=Block_z-1);
+		translate([MH_x/2,-MH_y/2-15,Block_z]) Bolt6Hole(depth=Block_z-1);
 		
 		//wire path
 		translate([Shaft_x,Shaft_y+11,2]) cylinder(d=8,h=30);
@@ -157,24 +165,44 @@ module SMBlock(PCBMount=""){
 	} // diff
 	
 	//PCB mount for RC servo controller
-	if (PCBMount=="G2RMini")
-	translate([1,PCB_Loc_Y,Block_z-Overlap]){
+	
+	translate([1,0,Block_z-Overlap])
 		difference(){
 			union(){
-				translate([-PCB_Bolt_Y,-PCB_BC_X/2,0])  hull(){
+				if (PCBMount=="G2RMini" || PCBMount=="Both"){
+				translate([-PCB_Bolt_Y,PCB_Loc_Y,0])  hull(){
 					translate([0,0,PCB_Bolt_Y+1]) rotate([0,90,0]) cylinder(d=8,h=6);
 					translate([0,-5,0]) cube([6,10,1]);}
 					
-				translate([-PCB_Bolt_Y,PCB_BC_X/2,0])  hull(){
+				translate([-PCB_Bolt_Y,PCB_Loc_Y+PCB_BC_X,0])  hull(){
 					translate([0,0,PCB_Bolt_Y+1]) rotate([0,90,0]) cylinder(d=8,h=6);
 					translate([0,-5,0]) cube([6,10,1]);}
+				}
+				
+				if (PCBMount=="G2RrA" || PCBMount=="Both"){
+					translate([-PCBG2RrA_Bolt_Y,PCBG3RrA_Loc_Y,0])  hull(){
+						translate([0,0,PCBG2RrA_Bolt_Y+1]) rotate([0,90,0]) cylinder(d=8,h=6);
+						translate([0,-5,0]) cube([6,10,1]);}
+					
+					translate([-PCBG2RrA_Bolt_Y,PCBG3RrA_Loc_Y+PCBG2RrA_BC_X,0])  hull(){
+						translate([0,0,PCBG2RrA_Bolt_Y+1]) rotate([0,90,0]) cylinder(d=8,h=6);
+						translate([0,-5,0]) cube([6,10,1]);}
+				}
+				
 			} // union
-		
-			translate([-PCB_Bolt_Y,-PCB_BC_X/2,PCB_Bolt_Y+1]) rotate([0,-90,0])Bolt6Hole();
-			translate([-PCB_Bolt_Y,PCB_BC_X/2,PCB_Bolt_Y+1]) rotate([0,-90,0])Bolt6Hole();}
+		if (PCBMount=="G2RMini" || PCBMount=="Both"){
+			translate([-PCB_Bolt_Y,PCB_Loc_Y,PCB_Bolt_Y+1]) rotate([0,-90,0])Bolt6Hole();
+			translate([-PCB_Bolt_Y,PCB_Loc_Y+PCB_BC_X,PCB_Bolt_Y+1]) rotate([0,-90,0])Bolt6Hole();
+		}
+			
+		if (PCBMount=="G2RrA" || PCBMount=="Both"){
+			translate([-PCBG2RrA_Bolt_Y,PCBG3RrA_Loc_Y,PCBG2RrA_Bolt_Y+1]) rotate([0,-90,0]) Bolt6Hole();
+			translate([-PCBG2RrA_Bolt_Y,PCBG3RrA_Loc_Y+PCBG2RrA_BC_X,PCBG2RrA_Bolt_Y+1]) rotate([0,-90,0]) Bolt6Hole();
+		}
 		} // diff
 	
-	if (PCBMount=="G2RrA")
+		/*
+	if (PCBMount=="G2RrA" || PCBMount=="Both")
 	translate([1,PCBG3RrA_Loc_Y,Block_z-Overlap]){
 		difference(){
 			union(){
@@ -190,7 +218,7 @@ module SMBlock(PCBMount=""){
 			translate([-PCBG2RrA_Bolt_Y,-PCBG2RrA_BC_X/2,PCBG2RrA_Bolt_Y+1]) rotate([0,-90,0]) Bolt6Hole();
 			translate([-PCBG2RrA_Bolt_Y,PCBG2RrA_BC_X/2,PCBG2RrA_Bolt_Y+1]) rotate([0,-90,0]) Bolt6Hole();}
 		} // diff
-		
+		/**/
 	// PCB G2R Mini
 	//translate([-3,PCB_Loc_Y,0])
 	//translate([0,-PCB_X/2,Block_z]) color("Red") rotate([0,-90,0]) cube([PCB_Y,PCB_X,1.5]);

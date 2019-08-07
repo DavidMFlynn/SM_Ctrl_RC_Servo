@@ -1,8 +1,8 @@
 ;====================================================================================================
 ;
 ;   Filename:	RCServoSWMachine.asm
-;   Date:	8/5/2019
-;   File Version:	1.0b3
+;   Date:	8/6/2019
+;   File Version:	1.0b4
 ;
 ;    Author:	David M. Flynn
 ;    Company:	Oxford V.U.E., Inc.
@@ -14,6 +14,7 @@
 ;
 ;    History:
 ;
+; 1.0b4   8/6/2019	FC1, Move to commanded position at power up. 1S servo powered time.
 ; 1.0b3   8/5/2019	Added move to center when both buttons are pressed.
 ; 1.0b2   7/20/2019	Delay at startup at mid point for 3 seconds, Slower motion for lower power.
 ; 	Stop senting pulses after in position for 0.5s.
@@ -30,16 +31,13 @@
 ;====================================================================================================
 ; To Do's
 ;
-; Move slowly. Compare dest w/ current adjust current to be dest.
-; Adjust by 16counts / 0.01 seconds
-;
 ;====================================================================================================
 ;====================================================================================================
 ; What happens next:
 ;
 ;   The system LED blinks once per second
 ;  Once at power-up:
-;   Set position to center for 3 seconds.
+;   Set position to the commanded position for 3 seconds.
 ;
 ;  Setup mode:
 ;   If SW1 is pressed Increment the set value for the control condition.
@@ -254,6 +252,7 @@ DebounceTime	EQU	d'10'
 #Define	SMRevFlag	Flags,5
 #Define	NewSWData	Flags,6
 ;
+ServoMoveTime	EQU	.100	;time servo is powered when CMD changes
 ;
 ;=========================================================================================
 ;Conditionals
@@ -504,6 +503,8 @@ start	MOVLB	0x01	; select bank 1
 	bsf	INTCON,GIE	; enable interupts
 ;
 	MOVLB	0x00	;bank 0
+	movlw	0x04
+	movwf	Timer4Lo	;power up delay
 ;
 ;=========================================================================================
 ;=========================================================================================
@@ -637,7 +638,7 @@ Set_Dest_End:
 	bsf	InPosition
 	bra	Move_It_Now	; Yes
 ;
-Move_It_NIP	movlw	.50
+Move_It_NIP	movlw	ServoMoveTime
 	movwf	Timer2Lo
 	bcf	InPosition
 ;
@@ -793,6 +794,10 @@ StartServo	MOVLB	0	;bank 0
 	RETURN
 	BCF	ServoOff
 ;
+SS_Start_Loop	movf	Timer4Lo,F
+	SKPZ
+	bra	SS_Start_Loop
+;
 ; Initialize to commanded position
 	btfss	CmdInputBit	;Contorl signal active?
 	bra	SS_CmdNormal	; No
@@ -830,7 +835,12 @@ SS_Move_It	call	CopyPosToDest
 	movwf	Timer4Lo
 	movlw	high .300
 	movwf	Timer4Hi
+	movlw	ServoMoveTime	;At power up move to commanded position
+	movwf	Timer2Lo
+	bcf	InPosition
 	RETURN
+;
+;=========================================================================================
 ;
 SetMiddlePosition	MOVLW	LOW kMidPulseWidth
 	MOVWF	Param7C
@@ -841,6 +851,8 @@ SetMiddlePosition	MOVLW	LOW kMidPulseWidth
 	movwf	Dest+1
 	movwf	CurPos+1
 	Return
+;
+;=========================================================================================
 ;
 SetDestAsCur	movf	Dest,W
 	MOVWF	Param7C

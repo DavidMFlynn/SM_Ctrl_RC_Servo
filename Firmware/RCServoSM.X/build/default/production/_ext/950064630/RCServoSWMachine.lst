@@ -1,4 +1,4 @@
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE  1
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE  1
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -7,8 +7,8 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00001 ;====================================================================================================
                       00002 ;
                       00003 ;   Filename:   RCServoSWMachine.asm
-                      00004 ;   Date:       7/20/2019
-                      00005 ;   File Version:       1.0b2
+                      00004 ;   Date:       8/6/2019
+                      00005 ;   File Version:       1.0b4
                       00006 ;
                       00007 ;    Author:    David M. Flynn
                       00008 ;    Company:   Oxford V.U.E., Inc.
@@ -20,30 +20,30 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00014 ;
                       00015 ;    History:
                       00016 ;
-                      00017 ; 1.0b2   7/20/2019     Delay at startup at mid point for 3 seconds, Slower motion for lower power.
-                      00018 ; 1.0b1   9/18/2017    RC1, Looks like it works.
-                      00019 ; 1.0d1   2/24/2016     Copied from RCServoTester1822
-                      00020 ; 1.0a4   11/16/2015    Works as a servo tester w/ the PCB.  I2C is not tested/working.
-                      00021 ; 1.0a3   1/15/2015     Added I2C slave
-                      00022 ; 1.0a2   1/11/2015     Added Center button.
-                      00023 ; 1.0a1   1/10/2015     First working tests.
-                      00024 ; 1.0d1   9/4/2014      First Code.
-                      00025 ;
-                      00026 ;====================================================================================================
-                      00027 ; Options
-                      00028 ;====================================================================================================
-                      00029 ; To Do's
-                      00030 ;
-                      00031 ; Move slowly. Compare dest w/ current adjust current to be dest.
-                      00032 ; Adjust by 16counts / 0.01 seconds
+                      00017 ; 1.0b4   8/6/2019      FC1, Move to commanded position at power up. 1S servo powered time.
+                      00018 ; 1.0b3   8/5/2019      Added move to center when both buttons are pressed.
+                      00019 ; 1.0b2   7/20/2019     Delay at startup at mid point for 3 seconds, Slower motion for lower power.
+                      00020 ;       Stop senting pulses after in position for 0.5s.
+                      00021 ; 1.0b1   9/18/2017    RC1, Looks like it works.
+                      00022 ; 1.0d1   2/24/2016     Copied from RCServoTester1822
+                      00023 ; 1.0a4   11/16/2015    Works as a servo tester w/ the PCB.  I2C is not tested/working.
+                      00024 ; 1.0a3   1/15/2015     Added I2C slave
+                      00025 ; 1.0a2   1/11/2015     Added Center button.
+                      00026 ; 1.0a1   1/10/2015     First working tests.
+                      00027 ; 1.0d1   9/4/2014      First Code.
+                      00028 ;
+                      00029 ;====================================================================================================
+                      00030 ; Options
+                      00031 ;====================================================================================================
+                      00032 ; To Do's
                       00033 ;
                       00034 ;====================================================================================================
                       00035 ;====================================================================================================
                       00036 ; What happens next:
                       00037 ;
                       00038 ;   The system LED blinks once per second
-                      00039 ;  Once at power-up: 
-                      00040 ;   Set position to center for 3 seconds.
+                      00039 ;  Once at power-up:
+                      00040 ;   Set position to the commanded position for 3 seconds.
                       00041 ;
                       00042 ;  Setup mode:
                       00043 ;   If SW1 is pressed Increment the set value for the control condition.
@@ -57,29 +57,31 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00051 ;   CCP1 outputs a 900uS to 2100uS (1800..4200 counts) pulse every 16,000uS
                       00052 ;
                       00053 ;   Resolution is 0.5uS
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE  2
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE  2
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
                       00054 ;
-                      00055 ;====================================================================================================
+                      00055 ;  if kInPosShutdown is set servo will power down after 0.5s
                       00056 ;
-                      00057 ;  Pin 1 VDD (+5V)              +5V
-                      00058 ;  Pin 2 RA5            CCP1
-                      00059 ;  Pin 3 RA4            System LED Active Low/SW2 Dec switch Active Low
-                      00060 ;  Pin 4 RA3/MCLR*/Vpp (Input only)     Command = Active High
-                      00061 ;  Pin 5 RA2            LED 2 Active Low/SW1 Inc switch Active Low
-                      00062 ;  Pin 6 RA1/ICSPCLK            Feedback Active High Output
-                      00063 ;  Pin 7 RA0/ICSPDAT            Relay Control Active High Output
-                      00064 ;  Pin 8 VSS (Ground)           Ground
-                      00065 ;
-                      00066 ;====================================================================================================
+                      00057 ;====================================================================================================
+                      00058 ;
+                      00059 ;  Pin 1 VDD (+5V)              +5V
+                      00060 ;  Pin 2 RA5            CCP1
+                      00061 ;  Pin 3 RA4            System LED Active Low/SW2 Dec switch Active Low
+                      00062 ;  Pin 4 RA3/MCLR*/Vpp (Input only)     Command = Active High
+                      00063 ;  Pin 5 RA2            LED 2 Active Low/SW1 Inc switch Active Low
+                      00064 ;  Pin 6 RA1/ICSPCLK            Feedback Active High Output
+                      00065 ;  Pin 7 RA0/ICSPDAT            Relay Control Active High Output
+                      00066 ;  Pin 8 VSS (Ground)           Ground
                       00067 ;
-                      00068 ;
-                      00069         list    p=12f1822,r=hex,w=1     ; list directive to define processor
+                      00068 ;====================================================================================================
+                      00069 ;
                       00070 ;
+                      00071         list    p=12f1822,r=hex,w=1     ; list directive to define processor
+                      00072 ;
                       00001         LIST
                       00002 
                       00003 ;==========================================================================
@@ -89,1024 +91,1079 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00007 ;==========================================================================
                       00008 
                       01039         LIST
-                      00073         list
-                      00074 ;
-8007   2FA4           00075         __CONFIG _CONFIG1,_FOSC_INTOSC & _WDTE_OFF & _MCLRE_OFF & _IESO_OFF
+                      00075         list
                       00076 ;
-                      00077 ;
+8007   2FA4           00077         __CONFIG _CONFIG1,_FOSC_INTOSC & _WDTE_OFF & _MCLRE_OFF & _IESO_OFF
                       00078 ;
-                      00079 ; INTOSC oscillator: I/O function on CLKIN pin
-                      00080 ; WDT disabled
-                      00081 ; PWRT disabled
-                      00082 ; MCLR/VPP pin function is digital input
-                      00083 ; Program memory code protection is disabled
-                      00084 ; Data memory code protection is disabled
-                      00085 ; Brown-out Reset enabled
-                      00086 ; CLKOUT function is disabled. I/O or oscillator function on the CLKOUT pin
-                      00087 ; Internal/External Switchover mode is disabled
-                      00088 ; Fail-Safe Clock Monitor is enabled
-                      00089 ;
-8008   1EFF           00090         __CONFIG _CONFIG2,_WRT_OFF & _PLLEN_OFF & _LVP_OFF
+                      00079 ;
+                      00080 ;
+                      00081 ; INTOSC oscillator: I/O function on CLKIN pin
+                      00082 ; WDT disabled
+                      00083 ; PWRT disabled
+                      00084 ; MCLR/VPP pin function is digital input
+                      00085 ; Program memory code protection is disabled
+                      00086 ; Data memory code protection is disabled
+                      00087 ; Brown-out Reset enabled
+                      00088 ; CLKOUT function is disabled. I/O or oscillator function on the CLKOUT pin
+                      00089 ; Internal/External Switchover mode is disabled
+                      00090 ; Fail-Safe Clock Monitor is enabled
                       00091 ;
-                      00092 ; Write protection off
-                      00093 ; 4x PLL disabled
-                      00094 ; Stack Overflow or Underflow will cause a Reset
-                      00095 ; Brown-out Reset Voltage (Vbor), low trip point selected.
-                      00096 ; Low-voltage programming Disabled ( allow MCLR to be digital in )
-                      00097 ;  *** must set apply Vdd before Vpp in ICD 3 settings ***
-                      00098 ;
-                      00099 ; '__CONFIG' directive is used to embed configuration data within .asm file.
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE  3
+8008   1EFF           00092         __CONFIG _CONFIG2,_WRT_OFF & _PLLEN_OFF & _LVP_OFF
+                      00093 ;
+                      00094 ; Write protection off
+                      00095 ; 4x PLL disabled
+                      00096 ; Stack Overflow or Underflow will cause a Reset
+                      00097 ; Brown-out Reset Voltage (Vbor), low trip point selected.
+                      00098 ; Low-voltage programming Disabled ( allow MCLR to be digital in )
+                      00099 ;  *** must set apply Vdd before Vpp in ICD 3 settings ***
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE  3
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00100 ; The lables following the directive are located in the respective .inc file.
-                      00101 ; See respective data sheet for additional information on configuration word.
-                      00102 ;
-  0000                00103         constant        oldCode=0
-  0000                00104         constant        useRS232=0
-                      00105 ;
-                      00106 #Define _C      STATUS,C
-                      00107 #Define _Z      STATUS,Z
-                      00108 ;
-                      00109 ; 0.5uS res counter from 8MHz OSC
-  00000009            00110 CCP1CON_Clr     EQU     b'00001001'     ;Clear output on match
-  00000008            00111 CCP1CON_Set     EQU     b'00001000'     ;Set output on match
-  0000000A            00112 CCP1CON_Int     EQU     b'00001010'
-                      00113 ;
-  000007FF            00114 kOffsetCtrValue EQU     d'2047'
-  00000708            00115 kMinPulseWidth  EQU     d'1800' ;900uS
-  00000BB8            00116 kMidPulseWidth  EQU     d'3000' ;1500uS
-  00001068            00117 kMaxPulseWidth  EQU     d'4200' ;2100uS
-  00000C80            00118 kDefaultPosition1       EQU     kMidPulseWidth+d'200'
-  00000AF0            00119 kDefaultPosition2       EQU     kMidPulseWidth-d'200'
-  00009C40            00120 kServoDwellTime EQU     d'40000'        ;20mS
-  00000002            00121 kInPosShutdown  EQU     b'00000010'
-                      00122 ;
-                      00123 ;====================================================================================================
-                      00126         list
-                      00127 ;
-                      00128 ;    Port A bits
-  000000DC            00129 PortADDRBits    EQU     b'11011100'
-                      00130 #Define RelayDrvrBit    LATA,0  ;Active High Output
-                      00131 #Define FeedbackBit     LATA,1  ;Active High Output
-                      00132 #Define LED2    LATA,2  ;Output: 0=LED ON, Input: 0 = Switch Pressed
-                      00133 #Define LED2TrisBit     TRISA,2
-                      00134 #Define IncBtnBit       PORTA,2
-                      00135 #Define CmdInputBit     PORTA,3
-                      00136 #Define SystemLED       LATA,4  ;Output: 0=LED ON, Input: 0 = Switch Pressed
-                      00137 #Define SysLEDTrisBit   TRISA,4
-                      00138 #Define DecBtnBit       PORTA,4
-                      00139 #Define RA5_In  PORTA,5 ;CCP1
-                      00140 ;
-  00000000            00141 PortAValue      EQU     b'00000000'
+                      00100 ;
+                      00101 ; '__CONFIG' directive is used to embed configuration data within .asm file.
+                      00102 ; The lables following the directive are located in the respective .inc file.
+                      00103 ; See respective data sheet for additional information on configuration word.
+                      00104 ;
+  0000                00105         constant        oldCode=0
+  0000                00106         constant        useRS232=0
+                      00107 ;
+                      00108 #Define _C      STATUS,C
+                      00109 #Define _Z      STATUS,Z
+                      00110 ;
+                      00111 ; 0.5uS res counter from 8MHz OSC
+  00000009            00112 CCP1CON_Clr     EQU     b'00001001'     ;Clear output on match
+  00000008            00113 CCP1CON_Set     EQU     b'00001000'     ;Set output on match
+  0000000A            00114 CCP1CON_Int     EQU     b'00001010'
+                      00115 ;
+  000007FF            00116 kOffsetCtrValue EQU     d'2047'
+  00000708            00117 kMinPulseWidth  EQU     d'1800' ;900uS
+  00000BB8            00118 kMidPulseWidth  EQU     d'3000' ;1500uS
+  00001068            00119 kMaxPulseWidth  EQU     d'4200' ;2100uS
+  00000C80            00120 kDefaultPosition1       EQU     kMidPulseWidth+d'200'
+  00000AF0            00121 kDefaultPosition2       EQU     kMidPulseWidth-d'200'
+  00009C40            00122 kServoDwellTime EQU     d'40000'        ;20mS
+  00000002            00123 kInPosShutdown  EQU     b'00000010'     ;b'00000010' enabled 0x00 disabled
+                      00124 ;
+                      00125 ;====================================================================================================
+                      00128         list
+                      00129 ;
+                      00130 ;    Port A bits
+  000000DC            00131 PortADDRBits    EQU     b'11011100'
+                      00132 #Define RelayDrvrBit    LATA,0  ;Active High Output
+                      00133 #Define FeedbackBit     LATA,1  ;Active High Output
+                      00134 #Define LED2    LATA,2  ;Output: 0=LED ON, Input: 0 = Switch Pressed
+                      00135 #Define LED2TrisBit     TRISA,2
+                      00136 #Define IncBtnBit       PORTA,2
+                      00137 #Define CmdInputBit     PORTA,3
+                      00138 #Define SystemLED       LATA,4  ;Output: 0=LED ON, Input: 0 = Switch Pressed
+                      00139 #Define SysLEDTrisBit   TRISA,4
+                      00140 #Define DecBtnBit       PORTA,4
+                      00141 #Define RA5_In  PORTA,5 ;CCP1
                       00142 ;
-                      00143 ;====================================================================================================
-                      00144 ;====================================================================================================
-                      00145 ;
-                      00146 ;Constants
-  000000FF            00147 All_In  EQU     0xFF
-  00000000            00148 All_Out EQU     0x00
-                      00149 ;
-  00000064            00150 LEDTIME EQU     d'100'  ;1.00 seconds
-  0000000A            00151 LEDErrorTime    EQU     d'10'
-                      00152 ;
-  00000001            00153 T1CON_Val       EQU     b'00000001'     ;PreScale=1,Fosc/4,Timer ON
-                      00154 ;T1CON_Val      EQU     b'00100001'     ;PreScale=4,Fosc/4,Timer ON
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE  4
+  00000000            00143 PortAValue      EQU     b'00000000'
+                      00144 ;
+                      00145 ;====================================================================================================
+                      00146 ;====================================================================================================
+                      00147 ;
+                      00148 ;Constants
+  000000FF            00149 All_In  EQU     0xFF
+  00000000            00150 All_Out EQU     0x00
+                      00151 ;
+  00000064            00152 LEDTIME EQU     d'100'  ;1.00 seconds
+  0000000A            00153 LEDErrorTime    EQU     d'10'
+                      00154 ;
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE  4
 
 F1822 Macros
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-  00000072            00155 OSCCON_Value    EQU     b'01110010'     ;8MHz
-                      00156 ;OSCCON_Value   EQU     b'11110000'     ;32MHz
-  0000004E            00157 T2CON_Value     EQU     b'01001110'     ;T2 On, /16 pre, /10 post
-                      00158 ;T2CON_Value    EQU     b'01001111'     ;T2 On, /64 pre, /10 post
-  0000007D            00159 PR2_Value       EQU     .125
-                      00160 ;
-                      00161 ;
-  00000000            00162 CCP1CON_Value   EQU     0x00    ;CCP1 off
+  00000001            00155 T1CON_Val       EQU     b'00000001'     ;PreScale=1,Fosc/4,Timer ON
+                      00156 ;T1CON_Val      EQU     b'00100001'     ;PreScale=4,Fosc/4,Timer ON
+  00000072            00157 OSCCON_Value    EQU     b'01110010'     ;8MHz
+                      00158 ;OSCCON_Value   EQU     b'11110000'     ;32MHz
+  0000004E            00159 T2CON_Value     EQU     b'01001110'     ;T2 On, /16 pre, /10 post
+                      00160 ;T2CON_Value    EQU     b'01001111'     ;T2 On, /64 pre, /10 post
+  0000007D            00161 PR2_Value       EQU     .125
+                      00162 ;
                       00163 ;
-  0000000A            00164 DebounceTime    EQU     d'10'
+  00000000            00164 CCP1CON_Value   EQU     0x00    ;CCP1 off
                       00165 ;
-                      00166 ;================================================================================================
-                      00167 ;***** VARIABLE DEFINITIONS
-                      00168 ; there are 128 bytes of ram, Bank0 0x20..0x7F, Bank1 0xA0..0xBF
-                      00169 ; there are 256 bytes of EEPROM starting at 0x00 the EEPROM is not mapped into memory but
-                      00170 ;  accessed through the EEADR and EEDATA registers
-                      00171 ;================================================================================================
-                      00172 ;  Bank0 Ram 020h-06Fh 80 Bytes
-                      00173 ;
-                      00174         cblock  0x20
+  0000000A            00166 DebounceTime    EQU     d'10'
+                      00167 ;
+                      00168 ;================================================================================================
+                      00169 ;***** VARIABLE DEFINITIONS
+                      00170 ; there are 128 bytes of ram, Bank0 0x20..0x7F, Bank1 0xA0..0xBF
+                      00171 ; there are 256 bytes of EEPROM starting at 0x00 the EEPROM is not mapped into memory but
+                      00172 ;  accessed through the EEADR and EEDATA registers
+                      00173 ;================================================================================================
+                      00174 ;  Bank0 Ram 020h-06Fh 80 Bytes
                       00175 ;
-  00000020            00176         ISR_Temp                ;scratch mem
-  00000021            00177         LED_Time
-  00000022            00178         LED2_Time       
-  00000023            00179         LED_Ticks               ;Timer tick count
-  00000024            00180         LED2_Ticks
-                      00181 ;
-                      00182 ;
-  00000025            00183         EEAddrTemp              ;EEProm address to read or write
-  00000026            00184         EEDataTemp              ;Data to be writen to EEProm
-                      00185 ;
-                      00186 ;
-  00000027            00187         Timer1Lo                ;1st 16 bit timer
-  00000028            00188         Timer1Hi                ; one second RX timeiout
-  00000029            00189         Timer2Lo                ;2nd 16 bit timer
-  0000002A            00190         Timer2Hi                ;
-  0000002B            00191         Timer3Lo                ;3rd 16 bit timer
-  0000002C            00192         Timer3Hi                ;GP wait timer
-  0000002D            00193         Timer4Lo                ;4th 16 bit timer
-  0000002E            00194         Timer4Hi                ; debounce timer
-                      00195 ;
-  0000002F            00196         Dest:2
-  00000031            00197         CurPos:2
-                      00198 ;
-  00000033            00199         Position1:2
-  00000035            00200         Position2:2
-  00000037            00201         SysFlags
-                      00202 ;
-  00000038            00203         Debounce
+                      00176         cblock  0x20
+                      00177 ;
+  00000020            00178         ISR_Temp                ;scratch mem
+  00000021            00179         LED_Time
+  00000022            00180         LED2_Time
+  00000023            00181         LED_Ticks               ;Timer tick count
+  00000024            00182         LED2_Ticks
+                      00183 ;
+                      00184 ;
+  00000025            00185         EEAddrTemp              ;EEProm address to read or write
+  00000026            00186         EEDataTemp              ;Data to be writen to EEProm
+                      00187 ;
+                      00188 ;
+  00000027            00189         Timer1Lo                ;1st 16 bit timer
+  00000028            00190         Timer1Hi                ; one second RX timeiout
+  00000029            00191         Timer2Lo                ;2nd 16 bit timer
+  0000002A            00192         Timer2Hi                ;
+  0000002B            00193         Timer3Lo                ;3rd 16 bit timer
+  0000002C            00194         Timer3Hi                ;GP wait timer
+  0000002D            00195         Timer4Lo                ;4th 16 bit timer
+  0000002E            00196         Timer4Hi                ; debounce timer
+                      00197 ;
+  0000002F            00198         Dest:2
+  00000031            00199         CurPos:2
+                      00200 ;
+  00000033            00201         Position1:2
+  00000035            00202         Position2:2
+  00000037            00203         SysFlags
                       00204 ;
-                      00205         endc
+  00000038            00205         Debounce
                       00206 ;
-                      00207 #Define PulseSent       SysFlags,0
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE  5
+                      00207         endc
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE  5
 
 F1822 Macros
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00208 #Define InPosShutdown   SysFlags,1
-                      00209 #Define InPosition      SysFlags,2
-                      00210 ;
-                      00211 #Define FirstRAMParam   Position1
-                      00212 #Define LastRAMParam    SysFlags
-                      00213 ;
-                      00214 ;================================================================================================
-                      00215 ;  Bank1 Ram 0A0h-0BFh 32 Bytes
-                      00216 ;
-                      00217 ;
-                      00218 ;=======================================================================================================
-                      00219 ;  Common Ram 70-7F same for all banks
-                      00220 ;      except for ISR_W_Temp these are used for paramiter passing and temp vars
-                      00221 ;=======================================================================================================
-                      00222 ;
-                      00223         cblock  0x70
-  00000070            00224         SigOutTime
-  00000071            00225         SigOutTimeH
-  00000072            00226         Flags
-                      00227 ;
-  00000073            00228         Param73
-  00000074            00229         Param74
-                      00230 ;
-  00000075            00231         CalcdDwell
-  00000076            00232         CalcdDwellH
-  00000077            00233         Param77
-  00000078            00234         Param78
-  00000079            00235         Param79
-  0000007A            00236         Param7A
-  0000007B            00237         Param7B
-  0000007C            00238         Param7C
-  0000007D            00239         Param7D
-  0000007E            00240         Param7E
-  0000007F            00241         Param7F
-                      00242         endc
-                      00243 ;
-                      00244 ; Flags bits
-                      00245 #Define IncBtnFlag      Flags,0
-                      00246 #Define DecBtnFlag      Flags,1
-                      00247 #Define LED2Flag        Flags,2
-                      00248 #Define DataChangedFlag Flags,3
-                      00249 #Define ServoOff        Flags,4
-                      00250 #Define SMRevFlag       Flags,5
-                      00251 #Define NewSWData       Flags,6
-                      00252 ;
-                      00253 ;
-                      00254 ;=========================================================================================
-                      00255 ;Conditionals
-  00000080            00256 HasISR  EQU     0x80    ;used to enable interupts 0x80=true 0x00=false
-                      00257 ;
-                      00258 ;=========================================================================================
-                      00259 ;==============================================================================================
-                      00260 ; ID Locations
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE  6
+                      00208 ;
+                      00209 #Define PulseSent       SysFlags,0
+                      00210 #Define InPosShutdown   SysFlags,1
+                      00211 #Define InPosition      SysFlags,2
+                      00212 ;
+                      00213 #Define FirstRAMParam   Position1
+                      00214 #Define LastRAMParam    SysFlags
+                      00215 ;
+                      00216 ;================================================================================================
+                      00217 ;  Bank1 Ram 0A0h-0BFh 32 Bytes
+                      00218 ;
+                      00219 ;
+                      00220 ;=======================================================================================================
+                      00221 ;  Common Ram 70-7F same for all banks
+                      00222 ;      except for ISR_W_Temp these are used for paramiter passing and temp vars
+                      00223 ;=======================================================================================================
+                      00224 ;
+                      00225         cblock  0x70
+  00000070            00226         SigOutTime
+  00000071            00227         SigOutTimeH
+  00000072            00228         Flags
+                      00229 ;
+  00000073            00230         Param73
+  00000074            00231         Param74
+                      00232 ;
+  00000075            00233         CalcdDwell
+  00000076            00234         CalcdDwellH
+  00000077            00235         Param77
+  00000078            00236         Param78
+  00000079            00237         Param79
+  0000007A            00238         Param7A
+  0000007B            00239         Param7B
+  0000007C            00240         Param7C
+  0000007D            00241         Param7D
+  0000007E            00242         Param7E
+  0000007F            00243         Param7F
+                      00244         endc
+                      00245 ;
+                      00246 ; Flags bits
+                      00247 #Define IncBtnFlag      Flags,0
+                      00248 #Define DecBtnFlag      Flags,1
+                      00249 #Define LED2Flag        Flags,2
+                      00250 #Define DataChangedFlag Flags,3
+                      00251 #Define ServoOff        Flags,4
+                      00252 #Define SMRevFlag       Flags,5
+                      00253 #Define NewSWData       Flags,6
+                      00254 ;
+  00000064            00255 ServoMoveTime   EQU     .100    ;time servo is powered when CMD changes
+                      00256 ;
+                      00257 ;=========================================================================================
+                      00258 ;Conditionals
+  00000080            00259 HasISR  EQU     0x80    ;used to enable interupts 0x80=true 0x00=false
+                      00260 ;
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE  6
 
 F1822 Macros
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-8000   0001 0000 000A 00261         __idlocs        0x10A2
+                      00261 ;=========================================================================================
+                      00262 ;==============================================================================================
+                      00263 ; ID Locations
+8000   0001 0000 000A 00264         __idlocs        0x10A2
        0002 
-                      00262 ;
-                      00263 ;==============================================================================================
-                      00264 ; EEPROM locations (NV-RAM) 0x00..0x7F (offsets)
-                      00265         org     0xF000
-                      00266 ;
-F000   0080           00267         de      LOW kDefaultPosition1   ;nvPosition1Lo
-F001   000C           00268         de      HIGH kDefaultPosition1
-F002   00F0           00269         de      LOW kDefaultPosition2
-F003   000A           00270         de      HIGH kDefaultPosition2
-                      00271 ;
-F004   0002           00272         de      kInPosShutdown  ;nvSysFlags
-                      00273 ;
-                      00274         cblock  0x00
-  00000000            00275         nvPosition1Lo
-  00000001            00276         nvPosition1Hi
-  00000002            00277         nvPosition2Lo
-  00000003            00278         nvPosition2Hi
-                      00279 ;
-  00000004            00280         nvSysFlags
-                      00281         endc
+                      00265 ;
+                      00266 ;==============================================================================================
+                      00267 ; EEPROM locations (NV-RAM) 0x00..0x7F (offsets)
+                      00268         org     0xF000
+                      00269 ;
+F000   0080           00270         de      LOW kDefaultPosition1   ;nvPosition1Lo
+F001   000C           00271         de      HIGH kDefaultPosition1
+F002   00F0           00272         de      LOW kDefaultPosition2
+F003   000A           00273         de      HIGH kDefaultPosition2
+                      00274 ;
+F004   0002           00275         de      kInPosShutdown  ;nvSysFlags
+                      00276 ;
+                      00277         cblock  0x00
+  00000000            00278         nvPosition1Lo
+  00000001            00279         nvPosition1Hi
+  00000002            00280         nvPosition2Lo
+  00000003            00281         nvPosition2Hi
                       00282 ;
-                      00283 #Define nvFirstParamByte        nvPosition1Lo
-                      00284 #Define nvLastParamByte nvSysFlags
+  00000004            00283         nvSysFlags
+                      00284         endc
                       00285 ;
-                      00286 ;
-                      00287 ;==============================================================================================
-                      00288 ;============================================================================================
+                      00286 #Define nvFirstParamByte        nvPosition1Lo
+                      00287 #Define nvLastParamByte nvSysFlags
+                      00288 ;
                       00289 ;
-                      00290 ;
-                      00291         ORG     0x000   ; processor reset vector
-0000   0183           00292         CLRF    STATUS
-0001   018A           00293         CLRF    PCLATH
-0002   2???           00294         goto    start   ; go to beginning of program
-                      00295 ;
-                      00296 ;===============================================================================================
-                      00297 ; Interupt Service Routine
+                      00290 ;==============================================================================================
+                      00291 ;============================================================================================
+                      00292 ;
+                      00293 ;
+                      00294         ORG     0x000   ; processor reset vector
+0000   0183           00295         CLRF    STATUS
+0001   018A           00296         CLRF    PCLATH
+0002   2???           00297         goto    start   ; go to beginning of program
                       00298 ;
-                      00299 ; we loop through the interupt service routing every 0.008192 seconds
-                      00300 ;
+                      00299 ;===============================================================================================
+                      00300 ; Interupt Service Routine
                       00301 ;
-                      00302         ORG     0x004   ; interrupt vector location
-0004   0020           00303         movlb   0       ; bank0
+                      00302 ; we loop through the interupt service routing every 0.008192 seconds
+                      00303 ;
                       00304 ;
-0005   1C91           00305         btfss   PIR1,TMR2IF
-0006   2???           00306         goto    IRQ_2
-0007   1091           00307         bcf     PIR1,TMR2IF     ; reset interupt flag bit
-                      00308 ;
-                      00309 ;Decrement timers until they are zero
-                      00310 ; 
-0008   0185           00311         CLRF    FSR0H
-0009   2???           00312         call    DecTimer1       ;if timer 1 is not zero decrement
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE  7
+                      00305         ORG     0x004   ; interrupt vector location
+0004   0020           00306         movlb   0       ; bank0
+                      00307 ;
+0005   1C91           00308         btfss   PIR1,TMR2IF
+0006   2???           00309         goto    IRQ_2
+0007   1091           00310         bcf     PIR1,TMR2IF     ; reset interupt flag bit
+                      00311 ;
+                      00312 ;Decrement timers until they are zero
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE  7
 
 F1822 Macros
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-000A   2???           00313         call    DecTimer2
-000B   2???           00314         call    DecTimer3
-000C   2???           00315         call    DecTimer4
-                      00316 ;
-                      00317 ;-----------------------------------------------------------------
-                      00318 ; blink LEDs
-000D   0021           00319         BankSel TRISA
-000E   160C           00320         BSF     SysLEDTrisBit   ;LED off
-000F   150C           00321         BSF     LED2TrisBit     ;LED2 off
-                      00322 ;
-0010   0020           00323         BankSel PORTA   ;bank 0
-0011   1072           00324         BCF     IncBtnFlag
-0012   1D0C           00325         BTFSS   IncBtnBit
-0013   1472           00326         BSF     IncBtnFlag
-                      00327 ;
-0014   10F2           00328         BCF     DecBtnFlag
-0015   1E0C           00329         BTFSS   DecBtnBit
-0016   14F2           00330         BSF     DecBtnFlag
-                      00331 ;
-0017   1772           00332         bsf     NewSWData
-                      00333 ;
-0018   0BA3           00334 SystemBlink_1   DECFSZ  LED_Ticks,F
-0019   3???           00335         bra     SystemBlink_end
+                      00313 ;
+0008   0185           00314         CLRF    FSR0H
+0009   2???           00315         call    DecTimer1       ;if timer 1 is not zero decrement
+000A   2???           00316         call    DecTimer2
+000B   2???           00317         call    DecTimer3
+000C   2???           00318         call    DecTimer4
+                      00319 ;
+                      00320 ;-----------------------------------------------------------------
+                      00321 ; blink LEDs
+000D   0021           00322         BankSel TRISA
+000E   160C           00323         BSF     SysLEDTrisBit   ;LED off
+000F   150C           00324         BSF     LED2TrisBit     ;LED2 off
+                      00325 ;
+0010   0020           00326         BankSel PORTA   ;bank 0
+0011   1072           00327         BCF     IncBtnFlag
+0012   1D0C           00328         BTFSS   IncBtnBit
+0013   1472           00329         BSF     IncBtnFlag
+                      00330 ;
+0014   10F2           00331         BCF     DecBtnFlag
+0015   1E0C           00332         BTFSS   DecBtnBit
+0016   14F2           00333         BSF     DecBtnFlag
+                      00334 ;
+0017   1772           00335         bsf     NewSWData
                       00336 ;
-001A   0821           00337         MOVF    LED_Time,W
-001B   00A3           00338         movwf   LED_Ticks
+0018   0BA3           00337 SystemBlink_1   DECFSZ  LED_Ticks,F
+0019   3???           00338         bra     SystemBlink_end
                       00339 ;
-001C   0021           00340         BankSel TRISA
-001D   120C           00341         BCF     SysLEDTrisBit   ;LED on
-001E   0020           00342 SystemBlink_end MOVLB   0
-                      00343 ;
-001F   0BA4           00344         decfsz  LED2_Ticks,F
-0020   3???           00345         bra     LED2_End
+001A   0821           00340         MOVF    LED_Time,W
+001B   00A3           00341         movwf   LED_Ticks
+                      00342 ;
+001C   0021           00343         BankSel TRISA
+001D   120C           00344         BCF     SysLEDTrisBit   ;LED on
+001E   0020           00345 SystemBlink_end MOVLB   0
                       00346 ;
-0021   0822           00347         MOVF    LED2_Time,W
-0022   00A4           00348         movwf   LED2_Ticks
+001F   0BA4           00347         decfsz  LED2_Ticks,F
+0020   3???           00348         bra     LED2_End
                       00349 ;
-0023   0021           00350         BankSel TRISA
-0024   1972           00351         BTFSC   LED2Flag
-0025   110C           00352         BCF     LED2TrisBit
-                      00353 ;
-0026   0020           00354 LED2_End        MOVLB   0
-                      00355 ;-----------------------------------------------------------------
+0021   0822           00350         MOVF    LED2_Time,W
+0022   00A4           00351         movwf   LED2_Ticks
+                      00352 ;
+0023   0021           00353         BankSel TRISA
+0024   1972           00354         BTFSC   LED2Flag
+0025   110C           00355         BCF     LED2TrisBit
                       00356 ;
-0027                  00357 IRQ_2:
-                      00358 ;==================================================================================
+0026   0020           00357 LED2_End        MOVLB   0
+                      00358 ;-----------------------------------------------------------------
                       00359 ;
-                      00360 ; Handle CCP1 Interupt Flag, Enter w/ bank 0 selected
-                      00361 ;
-0027   0020           00362 IRQ_Servo1      MOVLB   0       ;bank 0
-0028   1D11           00363         BTFSS   PIR1,CCP1IF
-0029   2???           00364         GOTO    IRQ_Servo1_End
-                      00365 ;
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE  8
+0027                  00360 IRQ_2:
+                      00361 ;==================================================================================
+                      00362 ;
+                      00363 ; Handle CCP1 Interupt Flag, Enter w/ bank 0 selected
+                      00364 ;
+0027   0020           00365 IRQ_Servo1      MOVLB   0       ;bank 0
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE  8
 
 F1822 Macros
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-002A   1437           00366         BSF     PulseSent
-002B   1E72           00367         BTFSS   ServoOff        ;Are we sending a pulse?
-002C   2???           00368         GOTO    IRQ_Servo1_1    ; Yes
-                      00369 ;
-                      00370 ;Oops, how did we get here???
-002D   0025           00371         MOVLB   0x05                   ;Bank 5
-002E   0193           00372         CLRF    CCP1CON
-002F   2???           00373         GOTO    IRQ_Servo1_X
-                      00374 ;
-0030   0025           00375 IRQ_Servo1_1    MOVLB   0x05                   ;Bank 5
-0031   1813           00376         BTFSC   CCP1CON,CCP1M0  ;Set output on match?
-0032   2???           00377         GOTO    IRQ_Servo1_OL   ; No
-                      00378 ; An output just went high
-                      00379 ;
-0033   0870           00380         MOVF    SigOutTime,W    ;Put the pulse into the CCP reg.
-0034   0791           00381         ADDWF   CCPR1L,F
-0035   0871           00382         MOVF    SigOutTime+1,W
-0036   3D92           00383         ADDWFC  CCPR1H,F
-0037   0020           00384         movlb   0       ;Bank 0
-0038   300A           00385         movlw   CCP1CON_Int
-0039   1CB7           00386         btfss   InPosShutdown
-003A   3009           00387         MOVLW   CCP1CON_Clr     ;Clear output on match
-003B   1D37           00388         btfss   InPosition
-003C   3009           00389         MOVLW   CCP1CON_Clr     ;Clear output on match
-003D   0025           00390         movlb   5       ;Bank 5
-003E   0093           00391         MOVWF   CCP1CON ;CCP1 clr on match
-                      00392 ;Calculate dwell time
-003F   3040           00393         MOVLW   LOW kServoDwellTime
-0040   00F5           00394         MOVWF   CalcdDwell
-0041   309C           00395         MOVLW   HIGH kServoDwellTime
-0042   00F6           00396         MOVWF   CalcdDwellH
-0043   0870           00397         MOVF    SigOutTime,W
-0044   02F5           00398         SUBWF   CalcdDwell,F
-0045   0871           00399         MOVF    SigOutTime+1,W
-0046   3BF6           00400         SUBWFB  CalcdDwellH,F
-0047   2???           00401         GOTO    IRQ_Servo1_X
-                      00402 ;
-                      00403 ; output went low so this cycle is done
-0048   3040           00404 IRQ_Servo1_OL   MOVLW   LOW kServoDwellTime
-0049   0791           00405         ADDWF   CCPR1L,F
-004A   309C           00406         MOVLW   HIGH kServoDwellTime
-004B   3D92           00407         ADDWFC  CCPR1H,F
-                      00408 ;
-004C   0020           00409         movlb   0       ;Bank 0
-004D   300A           00410         movlw   CCP1CON_Int
-004E   1CB7           00411         btfss   InPosShutdown
-004F   3008           00412         MOVLW   CCP1CON_Set     ;Set output on match    
-0050   1D37           00413         btfss   InPosition
-0051   3008           00414         MOVLW   CCP1CON_Set     ;Set output on match    
-0052   0025           00415         movlb   5       ;Bank 5
-0053   0093           00416         MOVWF   CCP1CON ;Idle output low
-                      00417 ;
-0054   0020           00418 IRQ_Servo1_X    MOVLB   0x00                   ;Bank 0
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE  9
+0028   1D11           00366         BTFSS   PIR1,CCP1IF
+0029   2???           00367         GOTO    IRQ_Servo1_End
+                      00368 ;
+002A   1437           00369         BSF     PulseSent
+002B   1E72           00370         BTFSS   ServoOff        ;Are we sending a pulse?
+002C   2???           00371         GOTO    IRQ_Servo1_1    ; Yes
+                      00372 ;
+                      00373 ;Oops, how did we get here???
+002D   0025           00374         MOVLB   0x05                   ;Bank 5
+002E   0193           00375         CLRF    CCP1CON
+002F   2???           00376         GOTO    IRQ_Servo1_X
+                      00377 ;
+0030   0025           00378 IRQ_Servo1_1    MOVLB   0x05                   ;Bank 5
+0031   1813           00379         BTFSC   CCP1CON,CCP1M0  ;Set output on match?
+0032   2???           00380         GOTO    IRQ_Servo1_OL   ; No
+                      00381 ; An output just went high
+                      00382 ;
+0033   0870           00383         MOVF    SigOutTime,W    ;Put the pulse into the CCP reg.
+0034   0791           00384         ADDWF   CCPR1L,F
+0035   0871           00385         MOVF    SigOutTime+1,W
+0036   3D92           00386         ADDWFC  CCPR1H,F
+0037   0020           00387         movlb   0       ;Bank 0
+0038   300A           00388         movlw   CCP1CON_Int
+0039   1CB7           00389         btfss   InPosShutdown
+003A   3009           00390         MOVLW   CCP1CON_Clr     ;Clear output on match
+003B   1D37           00391         btfss   InPosition
+003C   3009           00392         MOVLW   CCP1CON_Clr     ;Clear output on match
+003D   0025           00393         movlb   5       ;Bank 5
+003E   0093           00394         MOVWF   CCP1CON ;CCP1 clr on match
+                      00395 ;Calculate dwell time
+003F   3040           00396         MOVLW   LOW kServoDwellTime
+0040   00F5           00397         MOVWF   CalcdDwell
+0041   309C           00398         MOVLW   HIGH kServoDwellTime
+0042   00F6           00399         MOVWF   CalcdDwellH
+0043   0870           00400         MOVF    SigOutTime,W
+0044   02F5           00401         SUBWF   CalcdDwell,F
+0045   0871           00402         MOVF    SigOutTime+1,W
+0046   3BF6           00403         SUBWFB  CalcdDwellH,F
+0047   2???           00404         GOTO    IRQ_Servo1_X
+                      00405 ;
+                      00406 ; output went low so this cycle is done
+0048   3040           00407 IRQ_Servo1_OL   MOVLW   LOW kServoDwellTime
+0049   0791           00408         ADDWF   CCPR1L,F
+004A   309C           00409         MOVLW   HIGH kServoDwellTime
+004B   3D92           00410         ADDWFC  CCPR1H,F
+                      00411 ;
+004C   0020           00412         movlb   0       ;Bank 0
+004D   300A           00413         movlw   CCP1CON_Int
+004E   1CB7           00414         btfss   InPosShutdown
+004F   3008           00415         MOVLW   CCP1CON_Set     ;Set output on match
+0050   1D37           00416         btfss   InPosition
+0051   3008           00417         MOVLW   CCP1CON_Set     ;Set output on match
+0052   0025           00418         movlb   5       ;Bank 5
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE  9
 
 F1822 Macros
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-0055   1111           00419         BCF     PIR1,CCP1IF
-0056                  00420 IRQ_Servo1_End:
-                      00421 ;--------------------------------------------------------------------
-                      00422 ;
-0056   0009           00423         retfie          ; return from interrupt
-                      00424 ;
+0053   0093           00419         MOVWF   CCP1CON ;Idle output low
+                      00420 ;
+0054   0020           00421 IRQ_Servo1_X    MOVLB   0x00                   ;Bank 0
+0055   1111           00422         BCF     PIR1,CCP1IF
+0056                  00423 IRQ_Servo1_End:
+                      00424 ;--------------------------------------------------------------------
                       00425 ;
-                      00426 ;==============================================================================================
-                      00427 ;**********************************************************************************************
-                      00428 ;==============================================================================================
-                      00429 ;
-0057   0021           00430 start   MOVLB   0x01    ; select bank 1
-0058   1795           00431         bsf     OPTION_REG,NOT_WPUEN    ; disable pullups on port B
-0059   1295           00432         bcf     OPTION_REG,TMR0CS       ; TMR0 clock Fosc/4
-005A   1195           00433         bcf     OPTION_REG,PSA  ; prescaler assigned to TMR0
-005B   1415           00434         bsf     OPTION_REG,PS0  ;111 8mhz/4/256=7812.5hz=128uS/Ct=0.032768S/ISR
-005C   1495           00435         bsf     OPTION_REG,PS1  ;101 8mhz/4/64=31250hz=32uS/Ct=0.008192S/ISR
-005D   1515           00436         bsf     OPTION_REG,PS2
-                      00437 ;
-005E   3072           00438         MOVLW   OSCCON_Value
-005F   0099           00439         MOVWF   OSCCON
-0060   3017           00440         movlw   b'00010111'     ; WDT prescaler 1:65536 period is 2 sec (RESET value)
-0061   0097           00441         movwf   WDTCON  
-                      00442 ;       
-0062   0023           00443         MOVLB   0x03    ; bank 3
-0063   018C           00444         CLRF    ANSELA  ;Digital
+0056   0009           00426         retfie          ; return from interrupt
+                      00427 ;
+                      00428 ;
+                      00429 ;==============================================================================================
+                      00430 ;**********************************************************************************************
+                      00431 ;==============================================================================================
+                      00432 ;
+0057   0021           00433 start   MOVLB   0x01    ; select bank 1
+0058   1795           00434         bsf     OPTION_REG,NOT_WPUEN    ; disable pullups on port B
+0059   1295           00435         bcf     OPTION_REG,TMR0CS       ; TMR0 clock Fosc/4
+005A   1195           00436         bcf     OPTION_REG,PSA  ; prescaler assigned to TMR0
+005B   1415           00437         bsf     OPTION_REG,PS0  ;111 8mhz/4/256=7812.5hz=128uS/Ct=0.032768S/ISR
+005C   1495           00438         bsf     OPTION_REG,PS1  ;101 8mhz/4/64=31250hz=32uS/Ct=0.008192S/ISR
+005D   1515           00439         bsf     OPTION_REG,PS2
+                      00440 ;
+005E   3072           00441         MOVLW   OSCCON_Value
+005F   0099           00442         MOVWF   OSCCON
+0060   3017           00443         movlw   b'00010111'     ; WDT prescaler 1:65536 period is 2 sec (RESET value)
+0061   0097           00444         movwf   WDTCON
                       00445 ;
-                      00446 ; setup timer 1 for 0.5uS/count
-                      00447 ;
-0064   0020           00448         BANKSEL T1CON   ; bank 0
-0065   3001           00449         MOVLW   T1CON_Val
-0066   0098           00450         MOVWF   T1CON
-0067   1399           00451         bcf     T1GCON,TMR1GE
-                      00452 ;
-                      00453 ; clear memory to zero
-0068   2???           00454         CALL    ClearRam
+0062   0023           00446         MOVLB   0x03    ; bank 3
+0063   018C           00447         CLRF    ANSELA  ;Digital
+                      00448 ;
+                      00449 ; setup timer 1 for 0.5uS/count
+                      00450 ;
+0064   0020           00451         BANKSEL T1CON   ; bank 0
+0065   3001           00452         MOVLW   T1CON_Val
+0066   0098           00453         MOVWF   T1CON
+0067   1399           00454         bcf     T1GCON,TMR1GE
                       00455 ;
-                      00456 ; Setup timer 2 for 0.01S/Interupt
-0069   304E           00457         MOVLW   T2CON_Value     ;Setup T2 for 100/s
-006A   009C           00458         MOVWF   T2CON
-006B   0020           00459         BANKSEL PR2
-006C   307D           00460         MOVLW   PR2_Value
-006D   009B           00461         MOVWF   PR2
-006E   0021           00462         MOVLB   1       ;Bank 1
-006F   1491           00463         BSF     PIE1,TMR2IE
-0070   0020           00464         movlb   0                      ;Bank 0
-                      00465 ;
-                      00466 ; setup ccp1
-                      00467 ;
-0071   1672           00468         BSF     ServoOff
-0072   0022           00469         BANKSEL APFCON
-0073   141D           00470         BSF     APFCON,CCP1SEL  ;RA5
-0074   0025           00471         BANKSEL CCP1CON
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 10
+                      00456 ; clear memory to zero
+0068   2???           00457         CALL    ClearRam
+                      00458 ;
+                      00459 ; Setup timer 2 for 0.01S/Interupt
+0069   304E           00460         MOVLW   T2CON_Value     ;Setup T2 for 100/s
+006A   009C           00461         MOVWF   T2CON
+006B   0020           00462         BANKSEL PR2
+006C   307D           00463         MOVLW   PR2_Value
+006D   009B           00464         MOVWF   PR2
+006E   0021           00465         MOVLB   1       ;Bank 1
+006F   1491           00466         BSF     PIE1,TMR2IE
+0070   0020           00467         movlb   0                      ;Bank 0
+                      00468 ;
+                      00469 ; setup ccp1
+                      00470 ;
+0071   1672           00471         BSF     ServoOff
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 10
 
 F1822 Macros
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-0075   0193           00472         CLRF    CCP1CON
-                      00473 ;
-0076   0021           00474         MOVLB   0x01    ;Bank 1
-0077   1511           00475         bsf     PIE1,CCP1IE
+0072   0022           00472         BANKSEL APFCON
+0073   141D           00473         BSF     APFCON,CCP1SEL  ;RA5
+0074   0025           00474         BANKSEL CCP1CON
+0075   0193           00475         CLRF    CCP1CON
                       00476 ;
-                      00477 ; setup data ports
-0078   0020           00478         BANKSEL PORTA
-0079   3000           00479         MOVLW   PortAValue
-007A   008C           00480         MOVWF   PORTA   ;Init PORTA
-007B   0021           00481         BANKSEL TRISA
-007C   30DC           00482         MOVLW   PortADDRBits
-007D   008C           00483         MOVWF   TRISA
-                      00484 ;
-007E   0020           00485         MOVLB   0       ;bank 0
-007F   0064           00486         CLRWDT
+0076   0021           00477         MOVLB   0x01    ;Bank 1
+0077   1511           00478         bsf     PIE1,CCP1IE
+                      00479 ;
+                      00480 ; setup data ports
+0078   0020           00481         BANKSEL PORTA
+0079   3000           00482         MOVLW   PortAValue
+007A   008C           00483         MOVWF   PORTA   ;Init PORTA
+007B   0021           00484         BANKSEL TRISA
+007C   30DC           00485         MOVLW   PortADDRBits
+007D   008C           00486         MOVWF   TRISA
                       00487 ;
-0080   3064           00488         MOVLW   LEDTIME
-0081   00A1           00489         MOVWF   LED_Time
-0082   3001           00490         movlw   0x01    ;continuos ON
-0083   00A2           00491         movwf   LED2_Time
-                      00492 ;
-0084   0064           00493         CLRWDT
-0085   2???           00494         CALL    CopyToRam
-0086   0064           00495         CLRWDT
-                      00496 ;
-                      00497 ;
-0087   170B           00498         bsf     INTCON,PEIE     ; enable periferal interupts
-                      00499 ;       bsf     INTCON,T0IE     ; enable TMR0 interupt
-0088   178B           00500         bsf     INTCON,GIE      ; enable interupts
-                      00501 ;
-0089   0020           00502         MOVLB   0x00    ;bank 0
-                      00503 ;
-                      00504 ;=========================================================================================
-                      00505 ;=========================================================================================
-                      00506 ;  Main Loop
-                      00507 ;
-008A   2???           00508         CALL    StartServo
+007E   0020           00488         MOVLB   0       ;bank 0
+007F   0064           00489         CLRWDT
+                      00490 ;
+0080   3064           00491         MOVLW   LEDTIME
+0081   00A1           00492         MOVWF   LED_Time
+0082   3001           00493         movlw   0x01    ;continuos ON
+0083   00A2           00494         movwf   LED2_Time
+                      00495 ;
+0084   0064           00496         CLRWDT
+0085   2???           00497         CALL    CopyToRam
+0086   0064           00498         CLRWDT
+                      00499 ;
+                      00500 ;
+0087   170B           00501         bsf     INTCON,PEIE     ; enable periferal interupts
+                      00502 ;       bsf     INTCON,T0IE     ; enable TMR0 interupt
+0088   178B           00503         bsf     INTCON,GIE      ; enable interupts
+                      00504 ;
+0089   0020           00505         MOVLB   0x00    ;bank 0
+008A   3004           00506         movlw   0x04
+008B   00AD           00507         movwf   Timer4Lo        ;power up delay
+                      00508 ;
                       00509 ;=========================================================================================
-                      00510 ;
-  00000002            00511 BtnChangeRate   EQU     0x02    ;change by 1uS per 0.05 seconds
-  00000010            00512 SlewChangeRate  EQU     0x10    ;change by 5uS per 0.01 seconds
-                      00513 ;
-008B   0064           00514 MainLoop        CLRWDT
-008C   0020           00515         MOVLB   0x00                   ;Bank 0
-                      00516 ;
-                      00517 ; Handle Inc/Dec buttons
-008D   082D           00518         movf    Timer4Lo,W
-008E   042E           00519         iorwf   Timer4Hi,W
-008F   1D03           00520         SKPZ            ;Timer4 == 0?
-0090   3???           00521         bra     ML_Btns_End     ; No
-0091   1C72           00522         btfss   IncBtnFlag      ;Inc button is down?
-0092   3???           00523         bra     ML_Btns_Dec     ; No
-                      00524 ;
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 11
+                      00510 ;=========================================================================================
+                      00511 ;  Main Loop
+                      00512 ;
+008C   2???           00513         CALL    StartServo
+                      00514 ;=========================================================================================
+                      00515 ;
+  00000002            00516 BtnChangeRate   EQU     0x02    ;change by 1uS per 0.05 seconds
+  00000010            00517 SlewChangeRate  EQU     0x10    ;change by 5uS per 0.01 seconds
+                      00518 ;
+008D   0064           00519 MainLoop        CLRWDT
+008E   0020           00520         MOVLB   0x00                   ;Bank 0
+                      00521 ;
+                      00522 ; Handle Inc/Dec buttons
+008F   082D           00523         movf    Timer4Lo,W
+0090   042E           00524         iorwf   Timer4Hi,W
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 11
 
 F1822 Macros
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-0093   2???           00525         call    CopyPosToTemp
-0094   3002           00526         movlw   BtnChangeRate
-0095   07FC           00527         addwf   Param7C,F
-0096   3000           00528         movlw   0x00
-0097   3DFD           00529         addwfc  Param7D,F
-0098   2???           00530         call    ClampInt
-0099   2???           00531         call    CopyTempToPos
-009A   15F2           00532         bsf     DataChangedFlag
-                      00533 ;
-009B   3005           00534         movlw   0x05    ; 0.05 seconds
-009C   00AD           00535         movwf   Timer4Lo
-009D   3???           00536         bra     ML_Btns_End
-                      00537 ;
-009E   1CF2           00538 ML_Btns_Dec     btfss   DecBtnFlag      ;Dec button is down?
-009F   3???           00539         bra     ML_Btns_End     ; No
-                      00540 ;
-00A0   2???           00541         call    CopyPosToTemp
-00A1   3002           00542         movlw   BtnChangeRate
-00A2   02FC           00543         subwf   Param7C,F
-00A3   3000           00544         movlw   0x00
-00A4   3BFD           00545         subwfb  Param7D,F
-00A5   2???           00546         call    ClampInt
-00A6   2???           00547         call    CopyTempToPos
-00A7   15F2           00548         bsf     DataChangedFlag
-                      00549 ;       
-00A8   3005           00550         movlw   0x05    ; 0.05 seconds
-00A9   00AD           00551         movwf   Timer4Lo
-00AA                  00552 ML_Btns_End:
-00AA   19F2           00553         btfsc   DataChangedFlag
-00AB   2???           00554         call    SaveParams
-00AC   11F2           00555         bcf     DataChangedFlag
+0091   1D03           00525         SKPZ            ;Timer4 == 0?
+0092   3???           00526         bra     ML_Btns_End     ; No
+0093   1C72           00527         btfss   IncBtnFlag      ;Inc button is down?
+0094   3???           00528         bra     ML_Btns_Dec     ; No
+                      00529 ;
+0095   1CF2           00530         btfss   DecBtnFlag      ;Dec button is down?
+0096   3???           00531         bra     ML_Btns_Inc     ; No
+                      00532 ; Handle both buttons, move to center
+0097   30B8           00533         movlw   low kMidPulseWidth
+0098   00AF           00534         movwf   Dest
+0099   300B           00535         movlw   high kMidPulseWidth
+009A   00B0           00536         movwf   Dest+1
+009B   11F2           00537         bcf     DataChangedFlag
+009C   3???           00538         bra     Set_Dest_End
+                      00539 ;
+                      00540 ; Handle INC button
+009D   2???           00541 ML_Btns_Inc     call    CopyPosToTemp
+009E   3002           00542         movlw   BtnChangeRate
+009F   07FC           00543         addwf   Param7C,F
+00A0   3000           00544         movlw   0x00
+00A1   3DFD           00545         addwfc  Param7D,F
+00A2   2???           00546         call    ClampInt
+00A3   2???           00547         call    CopyTempToPos
+00A4   15F2           00548         bsf     DataChangedFlag
+                      00549 ;
+00A5   3005           00550         movlw   0x05    ; 0.05 seconds
+00A6   00AD           00551         movwf   Timer4Lo
+00A7   3???           00552         bra     ML_Btns_End
+                      00553 ;
+00A8   1CF2           00554 ML_Btns_Dec     btfss   DecBtnFlag      ;Dec button is down?
+00A9   3???           00555         bra     ML_Btns_Save    ; No
                       00556 ;
-                      00557 ;-------------------------
-                      00558 ; Set Dest
-00AD   082B           00559         movf    Timer3Lo,W      ;Don't move for startup time
-00AE   042C           00560         iorwf   Timer3Hi,W
-00AF   1D03           00561         SKPZ            ;Timer3 == 0?
-00B0   3???           00562         bra     Set_Dest_End    ; No
-                      00563 ;
-00B1   1F72           00564         btfss   NewSWData       ;10mS interval passed?
-00B2   3???           00565         bra     Set_Dest_End    ; No
-00B3   1372           00566         bcf     NewSWData
-                      00567 ;       
-00B4   1D8C           00568         btfss   CmdInputBit     ;Contorl signal active?
-00B5   3???           00569         bra     ML_CmdNormal    ; No
-                      00570 ; debounce, don't change until we've seen the input 5 times
-00B6   3005           00571         movlw   0x05
-00B7   0238           00572         subwf   Debounce,W
-00B8   1D03           00573         SKPZ            ;5 times?
-00B9   3???           00574         bra     Rev_Debounce    ; No
-                      00575 ;       
-00BA   0022           00576         movlb   2       ;Bank 2 for LATA
-00BB   140C           00577         bsf     RelayDrvrBit
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 12
+                      00557 ; Handle DEC button
+00AA   2???           00558         call    CopyPosToTemp
+00AB   3002           00559         movlw   BtnChangeRate
+00AC   02FC           00560         subwf   Param7C,F
+00AD   3000           00561         movlw   0x00
+00AE   3BFD           00562         subwfb  Param7D,F
+00AF   2???           00563         call    ClampInt
+00B0   2???           00564         call    CopyTempToPos
+00B1   15F2           00565         bsf     DataChangedFlag
+                      00566 ;
+00B2   3005           00567         movlw   0x05    ; 0.05 seconds
+00B3   00AD           00568         movwf   Timer4Lo
+00B4   3???           00569         bra     ML_Btns_End
+                      00570 
+00B5   19F2           00571 ML_Btns_Save    btfsc   DataChangedFlag
+00B6   2???           00572         call    SaveParams
+00B7   11F2           00573         bcf     DataChangedFlag
+00B8                  00574 ML_Btns_End:
+                      00575 ;
+                      00576 ;-------------------------
+                      00577 ; Set Dest
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 12
 
 F1822 Macros
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-00BC   148C           00578         bsf     FeedbackBit
-00BD   0020           00579         movlb   0       ;Bank0
-00BE   16F2           00580         bsf     SMRevFlag
-00BF   1572           00581         bsf     LED2Flag
-00C0   3???           00582         bra     Move_It
-                      00583 ;
-00C1   0AB8           00584 Rev_Debounce    incf    Debounce,F
-00C2   3???           00585         bra     Set_Dest_End
-                      00586 ;
-00C3   08B8           00587 ML_CmdNormal    movf    Debounce,F
-00C4   1D03           00588         SKPZ
-00C5   3???           00589         bra     Norm_Debounce
+                      00578 ;
+00B8   1F72           00579         btfss   NewSWData       ;10mS interval passed?
+00B9   3???           00580         bra     Set_Dest_End    ; No
+00BA   1372           00581         bcf     NewSWData
+                      00582 ;
+00BB   1D8C           00583         btfss   CmdInputBit     ;Contorl signal active?
+00BC   3???           00584         bra     ML_CmdNormal    ; No
+                      00585 ; debounce, don't change until we've seen the input 5 times
+00BD   3005           00586         movlw   0x05
+00BE   0238           00587         subwf   Debounce,W
+00BF   1D03           00588         SKPZ            ;5 times?
+00C0   3???           00589         bra     Rev_Debounce    ; No
                       00590 ;
-00C6   0022           00591         movlb   2       ;Bank 2
-00C7   100C           00592         bcf     RelayDrvrBit
-00C8   108C           00593         bcf     FeedbackBit
-00C9   0020           00594         movlb   0       ;Bank 0
-00CA   12F2           00595         bcf     SMRevFlag
-00CB   1172           00596         bcf     LED2Flag
-00CC   3???           00597         bra     Move_It
+00C1   0022           00591         movlb   2       ;Bank 2 for LATA
+00C2   140C           00592         bsf     RelayDrvrBit
+00C3   148C           00593         bsf     FeedbackBit
+00C4   0020           00594         movlb   0       ;Bank0
+00C5   16F2           00595         bsf     SMRevFlag
+00C6   1572           00596         bsf     LED2Flag
+00C7   3???           00597         bra     Move_It
                       00598 ;
-00CD   03B8           00599 Norm_Debounce   decf    Debounce,F
-00CE   3???           00600         bra     Set_Dest_End
+00C8   0AB8           00599 Rev_Debounce    incf    Debounce,F
+00C9   3???           00600         bra     Set_Dest_End
                       00601 ;
-00CF   2???           00602 Move_It call    CopyPosToDest
-                      00603 ;
-00D0                  00604 Set_Dest_End:
+00CA   08B8           00602 ML_CmdNormal    movf    Debounce,F
+00CB   1D03           00603         SKPZ
+00CC   3???           00604         bra     Norm_Debounce
                       00605 ;
-                      00606 ;---------------------
-                      00607 ; Move CurPos toward Dest
-00D0   0020           00608         movlb   0       ;Bank 0
-00D1   1C37           00609         btfss   PulseSent
-00D2   3???           00610         bra     Move_End
-00D3   1037           00611         bcf     PulseSent
-                      00612 ;
-00D4   082F           00613         movf    Dest,W
-00D5   0231           00614         subwf   CurPos,W
-00D6   00F8           00615         movwf   Param78
-00D7   0830           00616         movf    Dest+1,W
-00D8   3B32           00617         subwfb  CurPos+1,W
-00D9   04F8           00618         iorwf   Param78,F
-00DA   1D03           00619         SKPZ            ;Dest == CurPos?
-00DB   3???           00620         bra     Move_It_NIP
-00DC   08A9           00621         movf    Timer2Lo,F
-00DD   1903           00622         SKPNZ
-00DE   1537           00623         bsf     InPosition
-00DF   3???           00624         bra     Move_It_Now     ; Yes
-                      00625 ;
-00E0   3032           00626 Move_It_NIP     movlw   .50
-00E1   00A9           00627         movwf   Timer2Lo
-00E2   1137           00628         bcf     InPosition
-                      00629 ;
-00E3   082F           00630         movf    Dest,W
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 13
+00CD   0022           00606         movlb   2       ;Bank 2
+00CE   100C           00607         bcf     RelayDrvrBit
+00CF   108C           00608         bcf     FeedbackBit
+00D0   0020           00609         movlb   0       ;Bank 0
+00D1   12F2           00610         bcf     SMRevFlag
+00D2   1172           00611         bcf     LED2Flag
+00D3   3???           00612         bra     Move_It
+                      00613 ;
+00D4   03B8           00614 Norm_Debounce   decf    Debounce,F
+00D5   3???           00615         bra     Set_Dest_End
+                      00616 ;
+00D6   2???           00617 Move_It call    CopyPosToDest
+                      00618 ;
+00D7                  00619 Set_Dest_End:
+                      00620 ;
+                      00621 ;---------------------
+                      00622 ; Move CurPos toward Dest
+00D7   0020           00623         movlb   0       ;Bank 0
+00D8   1C37           00624         btfss   PulseSent
+00D9   3???           00625         bra     Move_End
+00DA   1037           00626         bcf     PulseSent
+                      00627 ;
+00DB   082F           00628         movf    Dest,W
+00DC   0231           00629         subwf   CurPos,W
+00DD   00F8           00630         movwf   Param78
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 13
 
 F1822 Macros
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-00E4   00F8           00631         movwf   Param78
-00E5   0830           00632         movf    Dest+1,W
-00E6   00F9           00633         movwf   Param79
-                      00634 ;
-00E7   0831           00635         movf    CurPos,W
-00E8   00FC           00636         movwf   Param7C
-00E9   0832           00637         movf    CurPos+1,W
-00EA   00FD           00638         movwf   Param7D
-                      00639 ;
-00EB   2???           00640         call    Param7D_LE_Param79
-00EC   1C77           00641         btfss   Param77,0       ;CurPos<=Dest?
-00ED   3???           00642         bra     Move_It_Neg     ; No, CurPos>Dest
-                      00643 ;CurPos<Dest, so move CurPos positive
-00EE   3010           00644         movlw   SlewChangeRate
-00EF   07FC           00645         addwf   Param7C,F
-00F0   3000           00646         movlw   0x00
-00F1   3DFD           00647         addwfc  Param7D,F
-00F2   2???           00648         call    Param7D_LE_Param79
-00F3   1C77           00649         btfss   Param77,0       ;CurPos<=Dest Still?
-00F4   3???           00650         bra     Move_It_Dest    ; No, CurPos>Dest
-                      00651                         ; Yes, CurPos+=SlewChangeRate
-                      00652 ;
-                      00653 ; make the calculated position the current position
-00F5   087C           00654 Move_It_New     movf    Param7C,W
-00F6   00B1           00655         movwf   CurPos
-00F7   087D           00656         movf    Param7D,W
-00F8   00B2           00657         movwf   CurPos+1
-00F9   3???           00658         bra     Move_It_Now
-                      00659 ;       
-00FA                  00660 Move_It_Neg
-00FA   3010           00661         movlw   SlewChangeRate
-00FB   02FC           00662         subwf   Param7C,F
-00FC   3000           00663         movlw   0x00
-00FD   3BFD           00664         subwfb  Param7D,F
-00FE   2???           00665         call    Param7D_LE_Param79
-00FF   1877           00666         btfsc   Param77,0       ;CurPos<=Dest now?
-0100   3???           00667         bra     Move_It_Dest    ; Yes, CurPos<=Dest
-0101   3???           00668         bra     Move_It_New
-                      00669 ;
-                      00670 ; make the current position the destination
-0102   082F           00671 Move_It_Dest    movf    Dest,W
-0103   00B1           00672         movwf   CurPos
-0104   0830           00673         movf    Dest+1,W
-0105   00B2           00674         movwf   CurPos+1
-                      00675 ;       
-0106                  00676 Move_It_Now:
-0106   0831           00677         movf    CurPos,W
-0107   00FC           00678         movwf   Param7C
-0108   0832           00679         movf    CurPos+1,W
-0109   00FD           00680         movwf   Param7D
-010A   2???           00681         CALL    Copy7CToSig
-010B                  00682 Move_End:
-                      00683 ;
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 14
+00DE   0830           00631         movf    Dest+1,W
+00DF   3B32           00632         subwfb  CurPos+1,W
+00E0   04F8           00633         iorwf   Param78,F
+00E1   1D03           00634         SKPZ            ;Dest == CurPos?
+00E2   3???           00635         bra     Move_It_NIP
+00E3   08A9           00636         movf    Timer2Lo,F
+00E4   1903           00637         SKPNZ
+00E5   1537           00638         bsf     InPosition
+00E6   3???           00639         bra     Move_It_Now     ; Yes
+                      00640 ;
+00E7   3064           00641 Move_It_NIP     movlw   ServoMoveTime
+00E8   00A9           00642         movwf   Timer2Lo
+00E9   1137           00643         bcf     InPosition
+                      00644 ;
+00EA   082F           00645         movf    Dest,W
+00EB   00F8           00646         movwf   Param78
+00EC   0830           00647         movf    Dest+1,W
+00ED   00F9           00648         movwf   Param79
+                      00649 ;
+00EE   0831           00650         movf    CurPos,W
+00EF   00FC           00651         movwf   Param7C
+00F0   0832           00652         movf    CurPos+1,W
+00F1   00FD           00653         movwf   Param7D
+                      00654 ;
+00F2   2???           00655         call    Param7D_LE_Param79
+00F3   1C77           00656         btfss   Param77,0       ;CurPos<=Dest?
+00F4   3???           00657         bra     Move_It_Neg     ; No, CurPos>Dest
+                      00658 ;CurPos<Dest, so move CurPos positive
+00F5   3010           00659         movlw   SlewChangeRate
+00F6   07FC           00660         addwf   Param7C,F
+00F7   3000           00661         movlw   0x00
+00F8   3DFD           00662         addwfc  Param7D,F
+00F9   2???           00663         call    Param7D_LE_Param79
+00FA   1C77           00664         btfss   Param77,0       ;CurPos<=Dest Still?
+00FB   3???           00665         bra     Move_It_Dest    ; No, CurPos>Dest
+                      00666                         ; Yes, CurPos+=SlewChangeRate
+                      00667 ;
+                      00668 ; make the calculated position the current position
+00FC   087C           00669 Move_It_New     movf    Param7C,W
+00FD   00B1           00670         movwf   CurPos
+00FE   087D           00671         movf    Param7D,W
+00FF   00B2           00672         movwf   CurPos+1
+0100   3???           00673         bra     Move_It_Now
+                      00674 ;
+0101                  00675 Move_It_Neg
+0101   3010           00676         movlw   SlewChangeRate
+0102   02FC           00677         subwf   Param7C,F
+0103   3000           00678         movlw   0x00
+0104   3BFD           00679         subwfb  Param7D,F
+0105   2???           00680         call    Param7D_LE_Param79
+0106   1877           00681         btfsc   Param77,0       ;CurPos<=Dest now?
+0107   3???           00682         bra     Move_It_Dest    ; Yes, CurPos<=Dest
+0108   3???           00683         bra     Move_It_New
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 14
 
 F1822 Macros
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-010B   2???           00684         goto    MainLoop
-                      00685 ;
-                      00686 ;========================================================================================
-                      00687 ; Param7D:Param7C >> SigOutTimeH:SigOutTime
-                      00688 ; Entry: Param7D:Param7C
-                      00689 ;
-                      00690 ; Don't disable interrupts if you don't need to...
-                      00691 ; If Param7D:Param7C == SigOutTimeH:SigOutTime then return
-010C   087C           00692 Copy7CToSig     MOVF    Param7C,W
-010D   0270           00693         SUBWF   SigOutTime,W
-010E   1D03           00694         SKPZ
-010F   2???           00695         GOTO    Copy7CToSig_1
-0110   087D           00696         MOVF    Param7D,W
-0111   0271           00697         SUBWF   SigOutTimeH,W
-0112   1903           00698         SKPNZ
-0113   0008           00699         Return
+                      00684 ;
+                      00685 ; make the current position the destination
+0109   082F           00686 Move_It_Dest    movf    Dest,W
+010A   00B1           00687         movwf   CurPos
+010B   0830           00688         movf    Dest+1,W
+010C   00B2           00689         movwf   CurPos+1
+                      00690 ;
+010D                  00691 Move_It_Now:
+010D   0831           00692         movf    CurPos,W
+010E   00FC           00693         movwf   Param7C
+010F   0832           00694         movf    CurPos+1,W
+0110   00FD           00695         movwf   Param7D
+0111   2???           00696         CALL    Copy7CToSig
+0112                  00697 Move_End:
+                      00698 ;
+0112   2???           00699         goto    MainLoop
                       00700 ;
-                      00701 ;SigOutTimeH:SigOutTime = Param7D:Param7C
-0114   138B           00702 Copy7CToSig_1   bcf     INTCON,GIE
-0115   1B8B           00703         btfsc   INTCON,GIE
-0116   3???           00704         bra     Copy7CToSig_1
-0117   087C           00705         MOVF    Param7C,W
-0118   00F0           00706         MOVWF   SigOutTime
-0119   087D           00707         MOVF    Param7D,W
-011A   00F1           00708         MOVWF   SigOutTimeH
-011B   178B           00709         bsf     INTCON,GIE
-                      00710 ;       
-011C   0008           00711         RETURN
-                      00712 ;
-                      00713 ;=========================================================================
-                      00714 ;
-011D   1EF2           00715 CopyTempToPos   btfss   SMRevFlag
-011E   3???           00716         bra     CopyTempToPos1
-011F   3???           00717         bra     CopyTempToPos2
-                      00718 ;
-0120   1EF2           00719 CopyPosToTemp   btfss   SMRevFlag
-0121   3???           00720         bra     CopyPos1ToTemp
-0122   3???           00721         bra     CopyPos2ToTemp
-                      00722 ;
-0123   1EF2           00723 CopyPosToDest   btfss   SMRevFlag
-0124   3???           00724         bra     CopyPos1ToDest
-0125   3???           00725         bra     CopyPos2ToDest
-                      00726 ;
-                      00727 ;====================================
-                      00728 ;
-0126   0834           00729 CopyPos1ToDest  movf    Position1+1,W
-0127   00B0           00730         movwf   Dest+1
-0128   0833           00731         movf    Position1,W
-0129   00AF           00732         movwf   Dest
-012A   0008           00733         return
-                      00734 ;
-                      00735 ;=====================================
-                      00736 ;
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 15
+                      00701 ;========================================================================================
+                      00702 ; Param7D:Param7C >> SigOutTimeH:SigOutTime
+                      00703 ; Entry: Param7D:Param7C
+                      00704 ;
+                      00705 ; Don't disable interrupts if you don't need to...
+                      00706 ; If Param7D:Param7C == SigOutTimeH:SigOutTime then return
+0113   087C           00707 Copy7CToSig     MOVF    Param7C,W
+0114   0270           00708         SUBWF   SigOutTime,W
+0115   1D03           00709         SKPZ
+0116   2???           00710         GOTO    Copy7CToSig_1
+0117   087D           00711         MOVF    Param7D,W
+0118   0271           00712         SUBWF   SigOutTimeH,W
+0119   1903           00713         SKPNZ
+011A   0008           00714         Return
+                      00715 ;
+                      00716 ;SigOutTimeH:SigOutTime = Param7D:Param7C
+011B   138B           00717 Copy7CToSig_1   bcf     INTCON,GIE
+011C   1B8B           00718         btfsc   INTCON,GIE
+011D   3???           00719         bra     Copy7CToSig_1
+011E   087C           00720         MOVF    Param7C,W
+011F   00F0           00721         MOVWF   SigOutTime
+0120   087D           00722         MOVF    Param7D,W
+0121   00F1           00723         MOVWF   SigOutTimeH
+0122   178B           00724         bsf     INTCON,GIE
+                      00725 ;
+0123   0008           00726         RETURN
+                      00727 ;
+                      00728 ;=========================================================================
+                      00729 ;
+0124   1EF2           00730 CopyTempToPos   btfss   SMRevFlag
+0125   3???           00731         bra     CopyTempToPos1
+0126   3???           00732         bra     CopyTempToPos2
+                      00733 ;
+0127   1EF2           00734 CopyPosToTemp   btfss   SMRevFlag
+0128   3???           00735         bra     CopyPos1ToTemp
+0129   3???           00736         bra     CopyPos2ToTemp
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 15
 
 F1822 Macros
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-012B   0836           00737 CopyPos2ToDest  movf    Position2+1,W
-012C   00B0           00738         movwf   Dest+1
-012D   0835           00739         movf    Position2,W
-012E   00AF           00740         movwf   Dest
-012F   0008           00741         return
-                      00742 ;
-                      00743 ;====================================
-                      00744 ;
-0130   0834           00745 CopyPos1ToTemp  movf    Position1+1,W
-0131   00FD           00746         movwf   Param7D
-0132   0833           00747         movf    Position1,W
-0133   00FC           00748         movwf   Param7C
-0134   0008           00749         return
-                      00750 ;
-                      00751 ;=====================================
-                      00752 ;
-0135   0836           00753 CopyPos2ToTemp  movf    Position2+1,W
-0136   00FD           00754         movwf   Param7D
-0137   0835           00755         movf    Position2,W
-0138   00FC           00756         movwf   Param7C
-0139   0008           00757         return
-                      00758 ;
-                      00759 ;=====================================
-                      00760 ;
-013A   087D           00761 CopyTempToPos1  movf    Param7D,W
-013B   00B4           00762         movwf   Position1+1
-013C   087C           00763         movf    Param7C,W
-013D   00B3           00764         movwf   Position1
-013E   0008           00765         return
-                      00766 ;
-013F   087D           00767 CopyTempToPos2  movf    Param7D,W
-0140   00B6           00768         movwf   Position2+1
-0141   087C           00769         movf    Param7C,W
-0142   00B5           00770         movwf   Position2
-0143   0008           00771         return
-                      00772 ;
-                      00773 ;=========================================================================================
-                      00774 ;=========================================================================================
-                      00775 ; Set CCP1 to go high is 0x100 clocks
-                      00776 ;
-0144   0020           00777 StartServo      MOVLB   0       ;bank 0
-0145   1E72           00778         BTFSS   ServoOff
-0146   0008           00779         RETURN
-0147   1272           00780         BCF     ServoOff
+                      00737 ;
+012A   1EF2           00738 CopyPosToDest   btfss   SMRevFlag
+012B   3???           00739         bra     CopyPos1ToDest
+012C   3???           00740         bra     CopyPos2ToDest
+                      00741 ;
+                      00742 ;====================================
+                      00743 ;
+012D   0834           00744 CopyPos1ToDest  movf    Position1+1,W
+012E   00B0           00745         movwf   Dest+1
+012F   0833           00746         movf    Position1,W
+0130   00AF           00747         movwf   Dest
+0131   0008           00748         return
+                      00749 ;
+                      00750 ;=====================================
+                      00751 ;
+0132   0836           00752 CopyPos2ToDest  movf    Position2+1,W
+0133   00B0           00753         movwf   Dest+1
+0134   0835           00754         movf    Position2,W
+0135   00AF           00755         movwf   Dest
+0136   0008           00756         return
+                      00757 ;
+                      00758 ;====================================
+                      00759 ;
+0137   0834           00760 CopyPos1ToTemp  movf    Position1+1,W
+0138   00FD           00761         movwf   Param7D
+0139   0833           00762         movf    Position1,W
+013A   00FC           00763         movwf   Param7C
+013B   0008           00764         return
+                      00765 ;
+                      00766 ;=====================================
+                      00767 ;
+013C   0836           00768 CopyPos2ToTemp  movf    Position2+1,W
+013D   00FD           00769         movwf   Param7D
+013E   0835           00770         movf    Position2,W
+013F   00FC           00771         movwf   Param7C
+0140   0008           00772         return
+                      00773 ;
+                      00774 ;=====================================
+                      00775 ;
+0141   087D           00776 CopyTempToPos1  movf    Param7D,W
+0142   00B4           00777         movwf   Position1+1
+0143   087C           00778         movf    Param7C,W
+0144   00B3           00779         movwf   Position1
+0145   0008           00780         return
                       00781 ;
-0148   2???           00782         CALL    SetMiddlePosition
-0149   2???           00783         CALL    Copy7CToSig
-                      00784 ;
-014A   3000           00785         MOVLW   0x00    ;start in 0x100 clocks
-014B   0096           00786         MOVWF   TMR1L
-014C   30FF           00787         MOVLW   0xFF
-014D   0097           00788         MOVWF   TMR1H
-                      00789 ;
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 16
+0146   087D           00782 CopyTempToPos2  movf    Param7D,W
+0147   00B6           00783         movwf   Position2+1
+0148   087C           00784         movf    Param7C,W
+0149   00B5           00785         movwf   Position2
+014A   0008           00786         return
+                      00787 ;
+                      00788 ;=========================================================================================
+                      00789 ;=========================================================================================
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 16
 
 F1822 Macros
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-014E   0025           00790         MOVLB   0x05                   ;Bank 5
-014F   0192           00791         CLRF    CCPR1H
-0150   0191           00792         CLRF    CCPR1L
-0151   3008           00793         MOVLW   CCP1CON_Set
-0152   0093           00794         MOVWF   CCP1CON ;go high on match
-0153   0020           00795         MOVLB   0x00    ;Bank 0
-0154   302C           00796         movlw   low .300        ;Do nothing for 3 seconds
-0155   00AD           00797         movwf   Timer4Lo
-0156   00AB           00798         movwf   Timer3Lo
-0157   3001           00799         movlw   high .300
-0158   00AE           00800         movwf   Timer4Hi
-0159   00AC           00801         movwf   Timer3Hi
-015A   0008           00802         RETURN
-                      00803 ;
-015B   30B8           00804 SetMiddlePosition       MOVLW   LOW kMidPulseWidth
-015C   00FC           00805         MOVWF   Param7C
-015D   00AF           00806         movwf   Dest
-015E   00B1           00807         movwf   CurPos
-015F   300B           00808         MOVLW   HIGH kMidPulseWidth
-0160   00FD           00809         MOVWF   Param7D
-0161   00B0           00810         movwf   Dest+1
-0162   00B2           00811         movwf   CurPos+1
-0163   0008           00812         Return
-                      00813 ;
-                      00814 ;=========================================================================================
-                      00815 ; ClampInt(Param7D:Param7C,kMinPulseWidth,kMaxPulseWidth)
-                      00816 ;
-                      00817 ; Entry: Param7D:Param7C
-                      00818 ; Exit: Param7D:Param7C=ClampInt(Param7D:Param7C,kMinPulseWidth,kMaxPulseWidth)
-                      00819 ;
-0164   3010           00820 ClampInt        MOVLW   high kMaxPulseWidth
-0165   027D           00821         SUBWF   Param7D,W       ;7D-kMaxPulseWidth
-                      00822         SKPNB           ;7D<Max?
-0166   1C03               M         BTFSS   STATUS,C
-0167   2???           00823         GOTO    ClampInt_1      ; Yes
-0168   1D03           00824         SKPZ            ;7D=Max?
-0169   2???           00825         GOTO    ClampInt_tooHigh        ; No, its greater.
-016A   3068           00826         MOVLW   low kMaxPulseWidth      ; Yes, MSB was equal check LSB
-016B   027C           00827         SUBWF   Param7C,W       ;7C-kMaxPulseWidth
-016C   1903           00828         SKPNZ           ;=kMaxPulseWidth
-016D   0008           00829         RETURN          ;Yes
-                      00830         SKPB            ;7C<Max?
-016E   1803               M         BTFSC   STATUS,C
-016F   2???           00831         GOTO    ClampInt_tooHigh        ; No
-0170   0008           00832         RETURN          ; Yes
-                      00833 ;
-0171   3007           00834 ClampInt_1      MOVLW   high kMinPulseWidth
-0172   027D           00835         SUBWF   Param7D,W       ;7D-kMinPulseWidth
-                      00836         SKPNB           ;7D<Min?
-0173   1C03               M         BTFSS   STATUS,C
-0174   2???           00837         GOTO    ClampInt_tooLow ; Yes
-0175   1D03           00838         SKPZ            ;=Min?
-0176   0008           00839         RETURN          ; No, 7D>kMinPulseWidth
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 17
+                      00790 ; Set CCP1 to go high is 0x100 clocks
+                      00791 ;
+014B   0020           00792 StartServo      MOVLB   0       ;bank 0
+014C   1E72           00793         BTFSS   ServoOff
+014D   0008           00794         RETURN
+014E   1272           00795         BCF     ServoOff
+                      00796 ;
+014F   08AD           00797 SS_Start_Loop   movf    Timer4Lo,F
+0150   1D03           00798         SKPZ
+0151   3???           00799         bra     SS_Start_Loop
+                      00800 ;
+                      00801 ; Initialize to commanded position
+0152   1D8C           00802         btfss   CmdInputBit     ;Contorl signal active?
+0153   3???           00803         bra     SS_CmdNormal    ; No
+0154   0022           00804         movlb   2       ;Bank 2 for LATA
+0155   140C           00805         bsf     RelayDrvrBit
+0156   148C           00806         bsf     FeedbackBit
+0157   0020           00807         movlb   0       ;Bank0
+0158   16F2           00808         bsf     SMRevFlag
+0159   1572           00809         bsf     LED2Flag
+015A   3???           00810         bra     SS_Move_It
+                      00811 ;
+015B   0022           00812 SS_CmdNormal    movlb   2       ;Bank 2
+015C   100C           00813         bcf     RelayDrvrBit
+015D   108C           00814         bcf     FeedbackBit
+015E   0020           00815         movlb   0       ;Bank 0
+015F   12F2           00816         bcf     SMRevFlag
+0160   1172           00817         bcf     LED2Flag
+                      00818 ;
+0161   2???           00819 SS_Move_It      call    CopyPosToDest
+0162   2???           00820         call    SetDestAsCur
+0163   2???           00821         CALL    Copy7CToSig
+                      00822 ;
+0164   3000           00823         MOVLW   0x00    ;start in 0x100 clocks
+0165   0096           00824         MOVWF   TMR1L
+0166   30FF           00825         MOVLW   0xFF
+0167   0097           00826         MOVWF   TMR1H
+                      00827 ;
+0168   0025           00828         MOVLB   0x05                   ;Bank 5
+0169   0192           00829         CLRF    CCPR1H
+016A   0191           00830         CLRF    CCPR1L
+016B   3008           00831         MOVLW   CCP1CON_Set
+016C   0093           00832         MOVWF   CCP1CON ;go high on match
+016D   0020           00833         MOVLB   0x00    ;Bank 0
+016E   302C           00834         movlw   low .300        ;Do nothing for 3 seconds
+016F   00AD           00835         movwf   Timer4Lo
+0170   3001           00836         movlw   high .300
+0171   00AE           00837         movwf   Timer4Hi
+0172   3064           00838         movlw   ServoMoveTime   ;At power up move to commanded position
+0173   00A9           00839         movwf   Timer2Lo
+0174   1137           00840         bcf     InPosition
+0175   0008           00841         RETURN
+                      00842 ;
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 17
 
 F1822 Macros
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-0177   3008           00840         MOVLW   low kMinPulseWidth      ; Yes, MSB is a match
-0178   027C           00841         SUBWF   Param7C,W       ;7C-kMinPulseWidth
-                      00842         SKPB            ;7C>=Min?
-0179   1803               M         BTFSC   STATUS,C
-017A   0008           00843         RETURN          ; Yes
-                      00844 ;       
-017B   3008           00845 ClampInt_tooLow MOVLW   low kMinPulseWidth
-017C   00FC           00846         MOVWF   Param7C
-017D   3007           00847         MOVLW   high kMinPulseWidth
-017E   00FD           00848         MOVWF   Param7D
-017F   0008           00849         RETURN
-                      00850 ;
-0180   3068           00851 ClampInt_tooHigh        MOVLW   low kMaxPulseWidth
-0181   00FC           00852         MOVWF   Param7C
-0182   3010           00853         MOVLW   high kMaxPulseWidth
-0183   00FD           00854         MOVWF   Param7D
-0184   0008           00855         RETURN
+                      00843 ;=========================================================================================
+                      00844 ;
+0176   30B8           00845 SetMiddlePosition       MOVLW   LOW kMidPulseWidth
+0177   00FC           00846         MOVWF   Param7C
+0178   00AF           00847         movwf   Dest
+0179   00B1           00848         movwf   CurPos
+017A   300B           00849         MOVLW   HIGH kMidPulseWidth
+017B   00FD           00850         MOVWF   Param7D
+017C   00B0           00851         movwf   Dest+1
+017D   00B2           00852         movwf   CurPos+1
+017E   0008           00853         Return
+                      00854 ;
+                      00855 ;=========================================================================================
                       00856 ;
-                      00857 ;=====================================================================================
-                      00858 ; Less or Equal
-                      00859 ;
-                      00860 ; Entry: Param7D:Param7C, Param79:Param78
-                      00861 ; Exit: Param77:0=Param7D:Param7C<=Param79:Param78
-                      00862 ;
-0185   01F7           00863 Param7D_LE_Param79      CLRF    Param77 ;default to >
-0186   0879           00864         MOVF    Param79,W
-0187   027D           00865         SUBWF   Param7D,W       ;Param7D-Param79
-                      00866         SKPNB           ;Param7D<Param79?
+017F   082F           00857 SetDestAsCur    movf    Dest,W
+0180   00FC           00858         MOVWF   Param7C
+0181   00B1           00859         movwf   CurPos
+0182   0830           00860         movf    Dest+1,W
+0183   00FD           00861         MOVWF   Param7D
+0184   00B2           00862         movwf   CurPos+1
+0185   0008           00863         Return
+                      00864 ;
+                      00865 ;=========================================================================================
+                      00866 ; ClampInt(Param7D:Param7C,kMinPulseWidth,kMaxPulseWidth)
+                      00867 ;
+                      00868 ; Entry: Param7D:Param7C
+                      00869 ; Exit: Param7D:Param7C=ClampInt(Param7D:Param7C,kMinPulseWidth,kMaxPulseWidth)
+                      00870 ;
+0186   3010           00871 ClampInt        MOVLW   high kMaxPulseWidth
+0187   027D           00872         SUBWF   Param7D,W       ;7D-kMaxPulseWidth
+                      00873         SKPNB           ;7D<Max?
 0188   1C03               M         BTFSS   STATUS,C
-0189   2???           00867         GOTO    SetTrue ; Yes
-018A   1D03           00868         SKPZ            ;Param7D>Param79?
-018B   0008           00869         RETURN          ; Yes
-018C   0878           00870         MOVF    Param78,W       ; No, MSB is a match
-018D   027C           00871         SUBWF   Param7C,W       ;Param7C-Param78
-                      00872         SKPNB           ;Param7C<Param78?
-018E   1C03               M         BTFSS   STATUS,C
-018F   2???           00873         GOTO    SetTrue ; Yes
-0190   1D03           00874         SKPZ            ;LSBs then same?
-0191   0008           00875         RETURN          ; No
-                      00876 ;
-0192   1477           00877 SetTrue BSF     Param77,0
-0193   0008           00878         RETURN
-                      00879 ;
-                      00880         if oldCode
-                      00881 ;=========================================================================================
-                      00882 ;=====================================================================================
-                      00883 ;
-                      00884 MoveTo78        MOVWF   FSR0L
-                      00885         MOVF    INDF0,W
-                      00886         MOVWF   Param78
-                      00887         INCF    FSR0L,F
-                      00888         MOVF    INDF0,W
-                      00889         MOVWF   Param79
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 18
+0189   2???           00874         GOTO    ClampInt_1      ; Yes
+018A   1D03           00875         SKPZ            ;7D=Max?
+018B   2???           00876         GOTO    ClampInt_tooHigh        ; No, its greater.
+018C   3068           00877         MOVLW   low kMaxPulseWidth      ; Yes, MSB was equal check LSB
+018D   027C           00878         SUBWF   Param7C,W       ;7C-kMaxPulseWidth
+018E   1903           00879         SKPNZ           ;=kMaxPulseWidth
+018F   0008           00880         RETURN          ;Yes
+                      00881         SKPB            ;7C<Max?
+0190   1803               M         BTFSC   STATUS,C
+0191   2???           00882         GOTO    ClampInt_tooHigh        ; No
+0192   0008           00883         RETURN          ; Yes
+                      00884 ;
+0193   3007           00885 ClampInt_1      MOVLW   high kMinPulseWidth
+0194   027D           00886         SUBWF   Param7D,W       ;7D-kMinPulseWidth
+                      00887         SKPNB           ;7D<Min?
+0195   1C03               M         BTFSS   STATUS,C
+0196   2???           00888         GOTO    ClampInt_tooLow ; Yes
+0197   1D03           00889         SKPZ            ;=Min?
+0198   0008           00890         RETURN          ; No, 7D>kMinPulseWidth
+0199   3008           00891         MOVLW   low kMinPulseWidth      ; Yes, MSB is a match
+019A   027C           00892         SUBWF   Param7C,W       ;7C-kMinPulseWidth
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 18
 
 F1822 Macros
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00890         RETURN
-                      00891 ;
-                      00892 ;=====================================================================================
-                      00893 ;
-                      00894 MoveTo7C        MOVWF   FSR0L
-                      00895         MOVF    INDF0,W
-                      00896         MOVWF   Param7C
-                      00897         INCF    FSR0L,F
-                      00898         MOVF    INDF0,W
-                      00899         MOVWF   Param7D
-                      00900         RETURN
+                      00893         SKPB            ;7C>=Min?
+019B   1803               M         BTFSC   STATUS,C
+019C   0008           00894         RETURN          ; Yes
+                      00895 ;
+019D   3008           00896 ClampInt_tooLow MOVLW   low kMinPulseWidth
+019E   00FC           00897         MOVWF   Param7C
+019F   3007           00898         MOVLW   high kMinPulseWidth
+01A0   00FD           00899         MOVWF   Param7D
+01A1   0008           00900         RETURN
                       00901 ;
-                      00902 ;=====================================================================================
-                      00903 ;
-                      00904 Move78To7C      MOVF    Param78,W
-                      00905         MOVWF   Param7C
-                      00906         MOVF    Param79,W
-                      00907         MOVWF   Param7D
-                      00908         RETURN
-                      00909 ;
-                      00910 ;=====================================================================================
-                      00911 ;
-                      00912 MoveFrom7C      MOVWF   FSR0L
-                      00913         MOVF    Param7C,W
-                      00914         MOVWF   INDF0
-                      00915         INCF    FSR0L,F
-                      00916         MOVF    Param7D,W
-                      00917         MOVWF   INDF0
-                      00918         RETURN
-                      00919 ;
-                      00920 ;=====================================================================================
-                      00921 ; Greater or Equal
-                      00922 ;
-                      00923 ; Entry: Param7D:Param7C, Param79:Param78
-                      00924 ; Exit: Param77:0=Param7D:Param7C>=Param79:Param78
-                      00925 ;
-                      00926 Param7D_GE_Param79      CLRF    Param77 ;default to <
-                      00927         MOVF    Param79,W
-                      00928         SUBWF   Param7D,W       ;Param7D-Param79
-                      00929         SKPNB           ;Param7D<Param79?
-                      00930         RETURN          ; Yes
-                      00931         SKPZ            ;Param7D>Param79?
-                      00932         GOTO    SetTrue ; Yes
-                      00933 Param7D_GE_Param79_1    MOVF    Param78,W       ; No, MSB is a match
-                      00934         SUBWF   Param7C,W       ;Param7C-Param78
-                      00935         SKPNB           ;Param7C<Param78?
-                      00936         RETURN          ; Yes
-                      00937         GOTO    SetTrue ; No
-                      00938 ;
-                      00939 ;======================================================================================
-                      00940 ;
-                      00941 EqualMin        CLRF    Param77
-                      00942         MOVLW   high kMinPulseWidth
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 19
+01A2   3068           00902 ClampInt_tooHigh        MOVLW   low kMaxPulseWidth
+01A3   00FC           00903         MOVWF   Param7C
+01A4   3010           00904         MOVLW   high kMaxPulseWidth
+01A5   00FD           00905         MOVWF   Param7D
+01A6   0008           00906         RETURN
+                      00907 ;
+                      00908 ;=====================================================================================
+                      00909 ; Less or Equal
+                      00910 ;
+                      00911 ; Entry: Param7D:Param7C, Param79:Param78
+                      00912 ; Exit: Param77:0=Param7D:Param7C<=Param79:Param78
+                      00913 ;
+01A7   01F7           00914 Param7D_LE_Param79      CLRF    Param77 ;default to >
+01A8   0879           00915         MOVF    Param79,W
+01A9   027D           00916         SUBWF   Param7D,W       ;Param7D-Param79
+                      00917         SKPNB           ;Param7D<Param79?
+01AA   1C03               M         BTFSS   STATUS,C
+01AB   2???           00918         GOTO    SetTrue ; Yes
+01AC   1D03           00919         SKPZ            ;Param7D>Param79?
+01AD   0008           00920         RETURN          ; Yes
+01AE   0878           00921         MOVF    Param78,W       ; No, MSB is a match
+01AF   027C           00922         SUBWF   Param7C,W       ;Param7C-Param78
+                      00923         SKPNB           ;Param7C<Param78?
+01B0   1C03               M         BTFSS   STATUS,C
+01B1   2???           00924         GOTO    SetTrue ; Yes
+01B2   1D03           00925         SKPZ            ;LSBs then same?
+01B3   0008           00926         RETURN          ; No
+                      00927 ;
+01B4   1477           00928 SetTrue BSF     Param77,0
+01B5   0008           00929         RETURN
+                      00930 ;
+                      00931         if oldCode
+                      00932 ;=========================================================================================
+                      00933 ;=====================================================================================
+                      00934 ;
+                      00935 MoveTo78        MOVWF   FSR0L
+                      00936         MOVF    INDF0,W
+                      00937         MOVWF   Param78
+                      00938         INCF    FSR0L,F
+                      00939         MOVF    INDF0,W
+                      00940         MOVWF   Param79
+                      00941         RETURN
+                      00942 ;
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 19
 
 F1822 Macros
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00943         SUBWF   Param7D,W
-                      00944         SKPZ
-                      00945         RETURN
-                      00946         MOVLW   low kMinPulseWidth
-                      00947         SUBWF   Param7C,W
-                      00948         SKPNZ
-                      00949         BSF     Param77,0
-                      00950         RETURN
-                      00951         
+                      00943 ;=====================================================================================
+                      00944 ;
+                      00945 MoveTo7C        MOVWF   FSR0L
+                      00946         MOVF    INDF0,W
+                      00947         MOVWF   Param7C
+                      00948         INCF    FSR0L,F
+                      00949         MOVF    INDF0,W
+                      00950         MOVWF   Param7D
+                      00951         RETURN
                       00952 ;
-                      00953 Subtract1000    MOVLW   low kMinPulseWidth
-                      00954         SUBWF   Param7C,F
-                      00955         SUBBF   Param7D,F
-                      00956         MOVLW   high kMinPulseWidth
-                      00957         SUBWF   Param7D,F
-                      00958         RETURN
-                      00959 ;
-                      00960 Subtract1500    MOVLW   low d'1500'
-                      00961         SUBWF   Param7C,F
-                      00962         SUBBF   Param7D,F
-                      00963         MOVLW   high d'1500'
-                      00964         SUBWF   Param7D,F
-                      00965         RETURN
-                      00966 ;
-                      00967 X2      CLRC
-                      00968         RLF     Param7C,F
-                      00969         RLF     Param7D,F
-                      00970         RETURN
-                      00971 ;
-                      00972 Add1000 MOVLW   low kMinPulseWidth
-                      00973         ADDWF   Param7C,F
-                      00974         ADDCF   Param7D,F
-                      00975         MOVLW   high kMinPulseWidth
-                      00976         ADDWF   Param7D,F
-                      00977         RETURN
-                      00978 ;
-                      00979         endif
-                      00980 ;=============================================================================================
-                      00981 ;==============================================================================================
-                      00982 ;
-                      00983         include F1822_Common.inc
+                      00953 ;=====================================================================================
+                      00954 ;
+                      00955 Move78To7C      MOVF    Param78,W
+                      00956         MOVWF   Param7C
+                      00957         MOVF    Param79,W
+                      00958         MOVWF   Param7D
+                      00959         RETURN
+                      00960 ;
+                      00961 ;=====================================================================================
+                      00962 ;
+                      00963 MoveFrom7C      MOVWF   FSR0L
+                      00964         MOVF    Param7C,W
+                      00965         MOVWF   INDF0
+                      00966         INCF    FSR0L,F
+                      00967         MOVF    Param7D,W
+                      00968         MOVWF   INDF0
+                      00969         RETURN
+                      00970 ;
+                      00971 ;=====================================================================================
+                      00972 ; Greater or Equal
+                      00973 ;
+                      00974 ; Entry: Param7D:Param7C, Param79:Param78
+                      00975 ; Exit: Param77:0=Param7D:Param7C>=Param79:Param78
+                      00976 ;
+                      00977 Param7D_GE_Param79      CLRF    Param77 ;default to <
+                      00978         MOVF    Param79,W
+                      00979         SUBWF   Param7D,W       ;Param7D-Param79
+                      00980         SKPNB           ;Param7D<Param79?
+                      00981         RETURN          ; Yes
+                      00982         SKPZ            ;Param7D>Param79?
+                      00983         GOTO    SetTrue ; Yes
+                      00984 Param7D_GE_Param79_1    MOVF    Param78,W       ; No, MSB is a match
+                      00985         SUBWF   Param7C,W       ;Param7C-Param78
+                      00986         SKPNB           ;Param7C<Param78?
+                      00987         RETURN          ; Yes
+                      00988         GOTO    SetTrue ; No
+                      00989 ;
+                      00990 ;======================================================================================
+                      00991 ;
+                      00992 EqualMin        CLRF    Param77
+                      00993         MOVLW   high kMinPulseWidth
+                      00994         SUBWF   Param7D,W
+                      00995         SKPZ
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 20
+
+F1822 Macros
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00996         RETURN
+                      00997         MOVLW   low kMinPulseWidth
+                      00998         SUBWF   Param7C,W
+                      00999         SKPNZ
+                      01000         BSF     Param77,0
+                      01001         RETURN
+                      01002 
+                      01003 ;
+                      01004 Subtract1000    MOVLW   low kMinPulseWidth
+                      01005         SUBWF   Param7C,F
+                      01006         SUBBF   Param7D,F
+                      01007         MOVLW   high kMinPulseWidth
+                      01008         SUBWF   Param7D,F
+                      01009         RETURN
+                      01010 ;
+                      01011 Subtract1500    MOVLW   low d'1500'
+                      01012         SUBWF   Param7C,F
+                      01013         SUBBF   Param7D,F
+                      01014         MOVLW   high d'1500'
+                      01015         SUBWF   Param7D,F
+                      01016         RETURN
+                      01017 ;
+                      01018 X2      CLRC
+                      01019         RLF     Param7C,F
+                      01020         RLF     Param7D,F
+                      01021         RETURN
+                      01022 ;
+                      01023 Add1000 MOVLW   low kMinPulseWidth
+                      01024         ADDWF   Param7C,F
+                      01025         ADDCF   Param7D,F
+                      01026         MOVLW   high kMinPulseWidth
+                      01027         ADDWF   Param7D,F
+                      01028         RETURN
+                      01029 ;
+                      01030         endif
+                      01031 ;=============================================================================================
+                      01032 ;==============================================================================================
+                      01033 ;
+                      01034         include F1822_Common.inc
                       00001 ;=========================================================================================
                       00002 ; Commonly used routines PIC16F1822 version
                       00003 ;
@@ -1119,14 +1176,14 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00010 ;    E-Mail:        dflynn@oxfordvue.com
                       00011 ;    Web Site:      http://www.oxfordvue.com/
                       00012 ;
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 20
+                      00013 ;=========================================================================================
+                      00014 ;    History:
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 21
 
 F1822 Macros
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00013 ;=========================================================================================
-                      00014 ;    History:
                       00015 ;
                       00016 ; 1.0.1 9/4/2014        Updated from F1847 Common.inc
                       00017 ; 1.0   11/16/2013      Updated from F648A Common.inc
@@ -1174,144 +1231,144 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00059 ; RAM used: All
                       00060 ; Calls:(2+0) ClearRam_L2
                       00061 ;
-0194   0020           00062 ClearRam        MOVLB   0x00
-0195   305F           00063         MOVLW   0x5F    ;Clear 20h-7Eh, 95 bytes
-0196   00FF           00064         MOVWF   Param7F
-0197   3020           00065         MOVLW   0x20
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 21
+01B6   0020           00062 ClearRam        MOVLB   0x00
+01B7   305F           00063         MOVLW   0x5F    ;Clear 20h-7Eh, 95 bytes
+01B8   00FF           00064         MOVWF   Param7F
+01B9   3020           00065         MOVLW   0x20
+01BA   0084           00066         MOVWF   FSR0
+01BB   0185           00067         CLRF    FSR0H
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 22
 
 F1822 Macros
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-0198   0084           00066         MOVWF   FSR0
-0199   0185           00067         CLRF    FSR0H
-019A   2???           00068         CALL    ClearRam_L2
+01BC   2???           00068         CALL    ClearRam_L2
                       00069 ;
-019B   3020           00070         MOVLW   0x20    ;Clear A0h-BFh, 32 bytes
-019C   00FF           00071         MOVWF   Param7F
-019D   30A0           00072         MOVLW   0xA0
-019E   0084           00073         MOVWF   FSR0
+01BD   3020           00070         MOVLW   0x20    ;Clear A0h-BFh, 32 bytes
+01BE   00FF           00071         MOVWF   Param7F
+01BF   30A0           00072         MOVLW   0xA0
+01C0   0084           00073         MOVWF   FSR0
                       00074 ;
-019F   0180           00075 ClearRam_L2     CLRF    INDF0
-01A0   0A84           00076         INCF    FSR0,F
-01A1   0BFF           00077         DECFSZ  Param7F,F
-01A2   2???           00078         GOTO    ClearRam_L2
-01A3   0008           00079         RETURN
+01C1   0180           00075 ClearRam_L2     CLRF    INDF0
+01C2   0A84           00076         INCF    FSR0,F
+01C3   0BFF           00077         DECFSZ  Param7F,F
+01C4   2???           00078         GOTO    ClearRam_L2
+01C5   0008           00079         RETURN
                       00080 ;
                       00081 ;==========================================================================
                       00082 ; copy param memory to ram
                       00083 ;
-01A4                  00084 CopyToRam:
-01A4   0020           00085         BankSel EEAddrTemp
-01A5   3000           00086         MOVLW   nvFirstParamByte
-01A6   00A5           00087         MOVWF   EEAddrTemp
-01A7   3033           00088         MOVLW   FirstRAMParam
-01A8   0084           00089         MOVWF   FSR0
-01A9   0185           00090         CLRF    FSR0H
-01AA   2???           00091 CopyToRam_L1    CALL    EERead
-01AB   0080           00092         MOVWF   INDF0
-01AC   3037           00093         MOVLW   LastRAMParam
-01AD   0204           00094         SUBWF   FSR0,W
-01AE   1903           00095         SKPNZ
-01AF   0008           00096         RETURN
-01B0   0A84           00097         INCF    FSR0,F
-01B1   0AA5           00098         INCF    EEAddrTemp,F
-01B2   2???           00099         GOTO    CopyToRam_L1
+01C6                  00084 CopyToRam:
+01C6   0020           00085         BankSel EEAddrTemp
+01C7   3000           00086         MOVLW   nvFirstParamByte
+01C8   00A5           00087         MOVWF   EEAddrTemp
+01C9   3033           00088         MOVLW   FirstRAMParam
+01CA   0084           00089         MOVWF   FSR0
+01CB   0185           00090         CLRF    FSR0H
+01CC   2???           00091 CopyToRam_L1    CALL    EERead
+01CD   0080           00092         MOVWF   INDF0
+01CE   3037           00093         MOVLW   LastRAMParam
+01CF   0204           00094         SUBWF   FSR0,W
+01D0   1903           00095         SKPNZ
+01D1   0008           00096         RETURN
+01D2   0A84           00097         INCF    FSR0,F
+01D3   0AA5           00098         INCF    EEAddrTemp,F
+01D4   2???           00099         GOTO    CopyToRam_L1
                       00100 ;
                       00101 ;===========================================================================
                       00102 ; copy ram to param memory
                       00103 ;
-01B3                  00104 SaveParams:
-01B3   0020           00105         BankSel EEAddrTemp
-01B4   3000           00106         MOVLW   nvFirstParamByte
-01B5   00A5           00107         MOVWF   EEAddrTemp
-01B6   3033           00108         MOVLW   FirstRAMParam
-01B7   0084           00109         MOVWF   FSR0
-01B8   0185           00110         CLRF    FSR0H
-01B9   0800           00111 SaveParams_L1   MOVF    INDF0,W
-01BA   00A6           00112         MOVWF   EEDataTemp
-01BB   2???           00113         CALL    EEWrite
-01BC   3037           00114         MOVLW   LastRAMParam    ;last byte
-01BD   0204           00115         SUBWF   FSR0,W
-01BE   1903           00116         SKPNZ
-01BF   0008           00117         RETURN
-01C0   0A84           00118         INCF    FSR0,F
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 22
+01D5                  00104 SaveParams:
+01D5   0020           00105         BankSel EEAddrTemp
+01D6   3000           00106         MOVLW   nvFirstParamByte
+01D7   00A5           00107         MOVWF   EEAddrTemp
+01D8   3033           00108         MOVLW   FirstRAMParam
+01D9   0084           00109         MOVWF   FSR0
+01DA   0185           00110         CLRF    FSR0H
+01DB   0800           00111 SaveParams_L1   MOVF    INDF0,W
+01DC   00A6           00112         MOVWF   EEDataTemp
+01DD   2???           00113         CALL    EEWrite
+01DE   3037           00114         MOVLW   LastRAMParam    ;last byte
+01DF   0204           00115         SUBWF   FSR0,W
+01E0   1903           00116         SKPNZ
+01E1   0008           00117         RETURN
+01E2   0A84           00118         INCF    FSR0,F
+01E3   0AA5           00119         INCF    EEAddrTemp,F
+01E4   2???           00120         GOTO    SaveParams_L1
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 23
 
 F1822 Macros
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-01C1   0AA5           00119         INCF    EEAddrTemp,F
-01C2   2???           00120         GOTO    SaveParams_L1
                       00121 ;
                       00122 ;=====================================================================================================
                       00123 ;=======================================================================================================
                             ==
                       00124 ; Decrement routine for 16 bit timers
                       00125 ;
-01C3   302E           00126 DecTimer4       movlw   Timer4Hi
-01C4   2???           00127         goto    DecTimer
-01C5   302C           00128 DecTimer3       movlw   Timer3Hi
-01C6   2???           00129         goto    DecTimer
-01C7   302A           00130 DecTimer2       movlw   Timer2Hi
-01C8   2???           00131         goto    DecTimer
-01C9   3028           00132 DecTimer1       movlw   Timer1Hi
+01E5   302E           00126 DecTimer4       movlw   Timer4Hi
+01E6   2???           00127         goto    DecTimer
+01E7   302C           00128 DecTimer3       movlw   Timer3Hi
+01E8   2???           00129         goto    DecTimer
+01E9   302A           00130 DecTimer2       movlw   Timer2Hi
+01EA   2???           00131         goto    DecTimer
+01EB   3028           00132 DecTimer1       movlw   Timer1Hi
                       00133 ;DecTimer
                       00134 ; entry: FSR=Timer(n)Hi
-01CA   0084           00135 DecTimer        MOVWF   FSR0L
-01CB   0800           00136         MOVF    INDF0,W ;TimerNHi
-01CC   0384           00137         DECF    FSR0L,F
-01CD   0400           00138         IORWF   INDF0,W ;TimerNLo
-01CE   1903           00139         SKPNZ
-01CF   0008           00140         RETURN
-01D0   3001           00141         MOVLW   0x01
-01D1   0280           00142         SUBWF   INDF0,F ;TimerNLo
-01D2   0A84           00143         INCF    FSR0L,F
-01D3   3000           00144         MOVLW   0x00
-01D4   3B80           00145         SUBWFB  INDF0,F ;TimerNHi
-01D5   0008           00146         RETURN
+01EC   0084           00135 DecTimer        MOVWF   FSR0L
+01ED   0185           00136         CLRF    FSR0H   ;Timers must be in bank 0
+01EE   0013           00137         moviw   FSR0--  ;TimerNHi
+01EF   0400           00138         IORWF   INDF0,W ;TimerNLo
+01F0   1903           00139         SKPNZ
+01F1   0008           00140         RETURN
+01F2   3001           00141         MOVLW   0x01
+01F3   0280           00142         SUBWF   INDF0,F ;TimerNLo
+01F4   0A84           00143         INCF    FSR0L,F
+01F5   3000           00144         MOVLW   0x00
+01F6   3B80           00145         SUBWFB  INDF0,F ;TimerNHi
+01F7   0008           00146         RETURN
                       00147 ;
                       00148 ;==============================================================================================
                       00149 ; Test for 16 bit timers = zero
                       00150 ;If Timer is zero return Z flag,1 else Z=0
                       00151 ;
-01D6   082D           00152 TestT4_Zero     movf    Timer4Lo,W
-01D7   042E           00153         iorwf   Timer4Hi,W
-01D8   0008           00154         return
+01F8   082D           00152 TestT4_Zero     movf    Timer4Lo,W
+01F9   042E           00153         iorwf   Timer4Hi,W
+01FA   0008           00154         return
                       00155 ;
-01D9   082B           00156 TestT3_Zero     movf    Timer3Lo,W
-01DA   042C           00157         iorwf   Timer3Hi,W
-01DB   0008           00158         return
+01FB   082B           00156 TestT3_Zero     movf    Timer3Lo,W
+01FC   042C           00157         iorwf   Timer3Hi,W
+01FD   0008           00158         return
                       00159 ;
-01DC   0829           00160 TestT2_Zero     movf    Timer2Lo,W
-01DD   042A           00161         iorwf   Timer2Hi,W
-01DE   0008           00162         return
+01FE   0829           00160 TestT2_Zero     movf    Timer2Lo,W
+01FF   042A           00161         iorwf   Timer2Hi,W
+0200   0008           00162         return
                       00163 ;
-01DF   0827           00164 TestT1_Zero     movf    Timer1Lo,W
-01E0   0428           00165         iorwf   Timer1Hi,W
-01E1   0008           00166         return  
+0201   0827           00164 TestT1_Zero     movf    Timer1Lo,W
+0202   0428           00165         iorwf   Timer1Hi,W
+0203   0008           00166         return
                       00167 ;
                       00168 ;======================================================================================
                       00169 ;Delay uS    1 cycle = 1uS, 8Mhz clock version
                       00170 ; RAM used: Param77
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 23
+                      00171 ; Calls:(0) none
+0204   3005           00172 Delay10uS       MOVLW   0x05    ;(2*3+5)/2=10
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 24
 
 F1822 Macros
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00171 ; Calls:(0) none
-01E2   3005           00172 Delay10uS       MOVLW   0x05    ;(2*3+5)/2=10
-01E3   2???           00173         GOTO    DelayWuS
-01E4   3041           00174 Delay100uS      MOVLW   d'65'   ;(28*3+5)/2=100
-01E5   2???           00175         GOTO    DelayWuS
-01E6   3019           00176 Delay40uS       MOVLW   d'25'   ;(11*3+5)=40
-01E7   00F7           00177 DelayWuS        MOVWF   Param77
-01E8   0BF7           00178 DelayWuS_Loop   DECFSZ  Param77,F
-01E9   2???           00179         GOTO    DelayWuS_Loop
-01EA   0008           00180         RETURN
+0205   2???           00173         GOTO    DelayWuS
+0206   3041           00174 Delay100uS      MOVLW   d'65'   ;(28*3+5)/2=100
+0207   2???           00175         GOTO    DelayWuS
+0208   3019           00176 Delay40uS       MOVLW   d'25'   ;(11*3+5)=40
+0209   00F7           00177 DelayWuS        MOVWF   Param77
+020A   0BF7           00178 DelayWuS_Loop   DECFSZ  Param77,F
+020B   2???           00179         GOTO    DelayWuS_Loop
+020C   0008           00180         RETURN
                       00181 ;
                       00182 ;==============================================================================================
                       00183 ; Read EEPROM
@@ -1319,7 +1376,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00185 ;        Bank 0 selected
                       00186 ; exit: W=EEDATA, Bank 0 selected
                       00187 ;
-01EB   00A5           00188 EEReadW movwf   EEAddrTemp
+020D   00A5           00188 EEReadW movwf   EEAddrTemp
                       00189 ;
                       00190 ;==============================================================================================
                       00191 ; Read EEPROM
@@ -1327,17 +1384,17 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00193 ;        Bank 0 selected
                       00194 ; exit: W=EEDATA, Bank 0 selected
                       00195 ;
-01EC   0825           00196 EERead  MOVF    EEAddrTemp,W    ;Data Memory
-01ED   0023           00197         BANKSEL EEADRL
-01EE   0091           00198         MOVWF   EEADRL  ;Address to read
+020E   0825           00196 EERead  MOVF    EEAddrTemp,W    ;Data Memory
+020F   0023           00197         BANKSEL EEADRL
+0210   0091           00198         MOVWF   EEADRL  ;Address to read
                       00199 ;
-01EF   1315           00200         BCF     EECON1,CFGS     ;Deselect Config space
-01F0   1395           00201         BCF     EECON1,EEPGD    ;Point to DATA memory
-01F1   1415           00202         BSF     EECON1,RD       ;EE Read
-01F2   0813           00203         MOVF    EEDATL,W        ;W = EEDATL
-01F3   0020           00204         MOVLB   0x00    ;Bank 0
-01F4   0008           00205         return
-                      00206 ;       
+0211   1315           00200         BCF     EECON1,CFGS     ;Deselect Config space
+0212   1395           00201         BCF     EECON1,EEPGD    ;Point to DATA memory
+0213   1415           00202         BSF     EECON1,RD       ;EE Read
+0214   0813           00203         MOVF    EEDATL,W        ;W = EEDATL
+0215   0020           00204         MOVLB   0x00    ;Bank 0
+0216   0008           00205         return
+                      00206 ;
                       00207 ;==============================================================================================
                       00208 ; Write EEPROM
                       00209 ; entry: EEPROM address to write in W
@@ -1345,7 +1402,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00211 ;        Bank 0 selected
                       00212 ; exit: Bank 0 selected
                       00213 ;
-01F5   00A5           00214 EEWriteW        movwf   EEAddrTemp
+0217   00A5           00214 EEWriteW        movwf   EEAddrTemp
                       00215 ;
                       00216 ;==============================================================================================
                       00217 ; Write EEPROM
@@ -1354,34 +1411,34 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00220 ;        Bank 0 selected
                       00221 ; exit: Bank 0 selected
                       00222 ;
-01F6   0825           00223 EEWrite MOVF    EEAddrTemp,W
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 24
+0218   0825           00223 EEWrite MOVF    EEAddrTemp,W
+0219   0023           00224         BANKSEL EEADRL
+021A   0091           00225         MOVWF   EEADRL  ;Data Memory Address to write
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 25
 
 F1822 Macros
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-01F7   0023           00224         BANKSEL EEADRL
-01F8   0091           00225         MOVWF   EEADRL  ;Data Memory Address to write
-01F9   0020           00226         BankSel EEDataTemp
-01FA   0826           00227         MOVF    EEDataTemp,W
-01FB   0023           00228         BANKSEL EEDATL
-01FC   0093           00229         MOVWF   EEDATL  ;Data Memory Value to write
-01FD   1315           00230         BCF     EECON1,CFGS     ;Deselect Configuration space
-01FE   1395           00231         BCF     EECON1,EEPGD    ;Point to DATA memory
-01FF   138B           00232         BCF     INTCON,GIE      ;Disable INTs.
-0200   1515           00233         BSF     EECON1,WREN     ;Enable writes
-0201   3055           00234         MOVLW   0x55
-0202   0096           00235         MOVWF   EECON2  ;Write 55h
-0203   30AA           00236         MOVLW   0xAA
-0204   0096           00237         MOVWF   EECON2  ;Write AAh
-0205   1495           00238         BSF     EECON1,WR       ;Set WR bit to begin write
-0206   178B           00239         BSF     INTCON,GIE      ;Enable Interrupts
-0207   1115           00240         BCF     EECON1,WREN     ;Disable writes
-0208   1895           00241 EEWriteLoop     BTFSC   EECON1,WR       ;Wait for write to complete
-0209   2???           00242         GOTO    EEWriteLoop
-020A   0020           00243         MOVLB   0x00    ;Bank 0
-020B   0008           00244         return
+021B   0020           00226         BankSel EEDataTemp
+021C   0826           00227         MOVF    EEDataTemp,W
+021D   0023           00228         BANKSEL EEDATL
+021E   0093           00229         MOVWF   EEDATL  ;Data Memory Value to write
+021F   1315           00230         BCF     EECON1,CFGS     ;Deselect Configuration space
+0220   1395           00231         BCF     EECON1,EEPGD    ;Point to DATA memory
+0221   138B           00232         BCF     INTCON,GIE      ;Disable INTs.
+0222   1515           00233         BSF     EECON1,WREN     ;Enable writes
+0223   3055           00234         MOVLW   0x55
+0224   0096           00235         MOVWF   EECON2  ;Write 55h
+0225   30AA           00236         MOVLW   0xAA
+0226   0096           00237         MOVWF   EECON2  ;Write AAh
+0227   1495           00238         BSF     EECON1,WR       ;Set WR bit to begin write
+0228   178B           00239         BSF     INTCON,GIE      ;Enable Interrupts
+0229   1115           00240         BCF     EECON1,WREN     ;Disable writes
+022A   1895           00241 EEWriteLoop     BTFSC   EECON1,WR       ;Wait for write to complete
+022B   2???           00242         GOTO    EEWriteLoop
+022C   0020           00243         MOVLB   0x00    ;Bank 0
+022D   0008           00244         return
                       00245 ;
                       00246 ;=======================================================================================================
                             ==
@@ -1414,14 +1471,14 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00273         CLRF    RXByte
                       00274         BCF     RCSTA,CREN
                       00275         BCF     RCSTA,FERR
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 25
+                      00276         BCF     RCSTA,OERR
+                      00277         BSF     RCSTA,CREN
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 26
 
 F1822 Macros
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00276         BCF     RCSTA,OERR
-                      00277         BSF     RCSTA,CREN
                       00278         RETURN
                       00279 ;
                       00280 ;=======================================================================================================
@@ -1435,7 +1492,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00287 StoreSerIn      MOVWF   Param78
                       00288         MOVLB   Ser_Buff_Bank
                       00289         INCF    Ser_In_Bytes,F
-                      00290 ;       
+                      00290 ;
                       00291         MOVF    Ser_In_InPtr,W
                       00292         ANDLW   0x1F
                       00293         INCF    Ser_In_InPtr,F
@@ -1473,14 +1530,14 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00325         RETURN
                       00326 ;
                       00327 ;=============================================================================================
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 26
+                      00328 ; Get the number of bytes in the serial ouput buffer
+                      00329 ;
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 27
 
 F1822 Macros
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00328 ; Get the number of bytes in the serial ouput buffer
-                      00329 ;
                       00330 ; Entry: none
                       00331 ; Exit: W=bytes in buffer, Z
                       00332 ;
@@ -1498,7 +1555,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00344 StoreSerOut     MOVWF   Param78
                       00345         MOVLB   Ser_Buff_Bank
                       00346         INCF    Ser_Out_Bytes,F
-                      00347 ;       
+                      00347 ;
                       00348         MOVF    Ser_Out_InPtr,W
                       00349         ANDLW   0x1F
                       00350         INCF    Ser_Out_InPtr,F
@@ -1532,14 +1589,14 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00378 GetSerOut       MOVLB   Ser_Buff_Bank
                       00379         BCF     Param78,0       ;no data
                       00380         MOVF    Ser_Out_Bytes,F
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 27
+                      00381         SKPNZ
+                      00382         GOTO    Bank0Rtn
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 28
 
 F1822 Macros
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00381         SKPNZ
-                      00382         GOTO    Bank0Rtn
                       00383         BSF     Param78,0
                       00384         DECF    Ser_Out_Bytes,F
                       00385         MOVF    Ser_Out_OutPtr,W
@@ -1556,15 +1613,15 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00396         ENDIF
                       00397 ;
                       00398 ;
-                      00984 ;
-                      00985 ;=========================================================================================
-                      00986 ;=========================================================================================
-                      00987 ;
-                      00988 ;
-                      00989 ;
-                      00990 ;
-2FA4 1EFF             00991         END
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 28
+                      01035 ;
+                      01036 ;=========================================================================================
+                      01037 ;=========================================================================================
+                      01038 ;
+                      01039 ;
+                      01040 ;
+                      01041 ;
+2FA4 1EFF             01042         END
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 29
 
 F1822 Macros
 SYMBOL TABLE
@@ -1623,7 +1680,7 @@ BRG16                             00000003
 BRGH                              00000002
 BSR                               00000008
 BSR0                              00000000
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 29
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 30
 
 F1822 Macros
 SYMBOL TABLE
@@ -1682,7 +1739,7 @@ CHS1                              00000003
 CHS2                              00000004
 CHS3                              00000005
 CHS4                              00000006
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 30
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 31
 
 F1822 Macros
 SYMBOL TABLE
@@ -1724,32 +1781,32 @@ CSRC                              00000007
 C_SHAD                            00000000
 CalcdDwell                        00000075
 CalcdDwellH                       00000076
-ClampInt                          00000164
-ClampInt_1                        00000171
-ClampInt_tooHigh                  00000180
-ClampInt_tooLow                   0000017B
-ClearRam                          00000194
-ClearRam_L2                       0000019F
+ClampInt                          00000186
+ClampInt_1                        00000193
+ClampInt_tooHigh                  000001A2
+ClampInt_tooLow                   0000019D
+ClearRam                          000001B6
+ClearRam_L2                       000001C1
 CmdInputBit                       PORTA,3
-Copy7CToSig                       0000010C
-Copy7CToSig_1                     00000114
-CopyPos1ToDest                    00000126
-CopyPos1ToTemp                    00000130
-CopyPos2ToDest                    0000012B
-CopyPos2ToTemp                    00000135
-CopyPosToDest                     00000123
-CopyPosToTemp                     00000120
-CopyTempToPos                     0000011D
-CopyTempToPos1                    0000013A
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 31
+Copy7CToSig                       00000113
+Copy7CToSig_1                     0000011B
+CopyPos1ToDest                    0000012D
+CopyPos1ToTemp                    00000137
+CopyPos2ToDest                    00000132
+CopyPos2ToTemp                    0000013C
+CopyPosToDest                     0000012A
+CopyPosToTemp                     00000127
+CopyTempToPos                     00000124
+CopyTempToPos1                    00000141
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 32
 
 F1822 Macros
 SYMBOL TABLE
   LABEL                             VALUE 
 
-CopyTempToPos2                    0000013F
-CopyToRam                         000001A4
-CopyToRam_L1                      000001AA
+CopyTempToPos2                    00000146
+CopyToRam                         000001C6
+CopyToRam_L1                      000001CC
 CurPos                            00000031
 DACCON0                           00000118
 DACCON1                           00000119
@@ -1775,16 +1832,16 @@ Debounce                          00000038
 DebounceTime                      0000000A
 DecBtnBit                         PORTA,4
 DecBtnFlag                        Flags,1
-DecTimer                          000001CA
-DecTimer1                         000001C9
-DecTimer2                         000001C7
-DecTimer3                         000001C5
-DecTimer4                         000001C3
-Delay100uS                        000001E4
-Delay10uS                         000001E2
-Delay40uS                         000001E6
-DelayWuS                          000001E7
-DelayWuS_Loop                     000001E8
+DecTimer                          000001EC
+DecTimer1                         000001EB
+DecTimer2                         000001E9
+DecTimer3                         000001E7
+DecTimer4                         000001E5
+Delay100uS                        00000206
+Delay10uS                         00000204
+Delay40uS                         00000208
+DelayWuS                          00000209
+DelayWuS_Loop                     0000020A
 Dest                              0000002F
 ECCP1AS                           00000295
 EEADR                             00000191
@@ -1800,17 +1857,17 @@ EEDataTemp                        00000026
 EEIE                              00000004
 EEIF                              00000004
 EEPGD                             00000007
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 32
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 33
 
 F1822 Macros
 SYMBOL TABLE
   LABEL                             VALUE 
 
-EERead                            000001EC
-EEReadW                           000001EB
-EEWrite                           000001F6
-EEWriteLoop                       00000208
-EEWriteW                          000001F5
+EERead                            0000020E
+EEReadW                           0000020D
+EEWrite                           00000218
+EEWriteLoop                       0000022A
+EEWriteW                          00000217
 F                                 00000001
 FERR                              00000002
 FLT0                              00000002
@@ -1859,7 +1916,7 @@ IOCAN2                            00000002
 IOCAN3                            00000003
 IOCAN4                            00000004
 IOCAN5                            00000005
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 33
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 34
 
 F1822 Macros
 SYMBOL TABLE
@@ -1918,7 +1975,7 @@ MDCH0                             00000000
 MDCH1                             00000001
 MDCH2                             00000002
 MDCH3                             00000003
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 34
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 35
 
 F1822 Macros
 SYMBOL TABLE
@@ -1951,17 +2008,19 @@ MDOUT_PORTA                       00000000
 MDSLR                             00000005
 MDSRC                             0000039D
 MFIOFR                            00000002
-ML_Btns_Dec                       0000009E
-ML_Btns_End                       000000AA
-ML_CmdNormal                      000000C3
-MainLoop                          0000008B
-Move_End                          0000010B
-Move_It                           000000CF
-Move_It_Dest                      00000102
-Move_It_NIP                       000000E0
-Move_It_Neg                       000000FA
-Move_It_New                       000000F5
-Move_It_Now                       00000106
+ML_Btns_Dec                       000000A8
+ML_Btns_End                       000000B8
+ML_Btns_Inc                       0000009D
+ML_Btns_Save                      000000B5
+ML_CmdNormal                      000000CA
+MainLoop                          0000008D
+Move_End                          00000112
+Move_It                           000000D6
+Move_It_Dest                      00000109
+Move_It_NIP                       000000E7
+Move_It_Neg                       00000101
+Move_It_New                       000000FC
+Move_It_Now                       0000010D
 NOT_BOR                           00000000
 NOT_DONE                          00000001
 NOT_MCLR                          00000003
@@ -1973,16 +2032,16 @@ NOT_T1SYNC                        00000002
 NOT_TO                            00000004
 NOT_WPUEN                         00000007
 NewSWData                         Flags,6
-Norm_Debounce                     000000CD
+Norm_Debounce                     000000D4
 OERR                              00000001
-OPTION_REG                        00000095
-OSC1                              00000005
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 35
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 36
 
 F1822 Macros
 SYMBOL TABLE
   LABEL                             VALUE 
 
+OPTION_REG                        00000095
+OSC1                              00000005
 OSC2                              00000004
 OSCCON                            00000099
 OSCCON_Value                      00000072
@@ -2034,16 +2093,16 @@ Param77                           00000077
 Param78                           00000078
 Param79                           00000079
 Param7A                           0000007A
-Param7B                           0000007B
-Param7C                           0000007C
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 36
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 37
 
 F1822 Macros
 SYMBOL TABLE
   LABEL                             VALUE 
 
+Param7B                           0000007B
+Param7C                           0000007C
 Param7D                           0000007D
-Param7D_LE_Param79                00000185
+Param7D_LE_Param79                000001A7
 Param7E                           0000007E
 Param7F                           0000007F
 PortADDRBits                      000000DC
@@ -2071,7 +2130,7 @@ RX9D                              00000000
 RXDTSEL                           00000007
 R_NOT_W                           00000002
 RelayDrvrBit                      LATA,0
-Rev_Debounce                      000000C1
+Rev_Debounce                      000000C8
 S                                 00000003
 SBCDE                             00000002
 SBOREN                            00000007
@@ -2093,14 +2152,14 @@ SKPNB
 SMP                               00000007
 SMRevFlag                         Flags,5
 SP1BRG                            0000019B
-SP1BRGH                           0000019C
-SP1BRGL                           0000019B
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 37
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 38
 
 F1822 Macros
 SYMBOL TABLE
   LABEL                             VALUE 
 
+SP1BRGH                           0000019C
+SP1BRGL                           0000019B
 SPBRG                             0000019B
 SPBRGH                            0000019C
 SPBRGL                            0000019B
@@ -2151,15 +2210,18 @@ SSPMSK                            00000213
 SSPOV                             00000006
 SSPSTAT                           00000214
 SSSEL                             00000005
-STATUS                            00000003
-STATUS_SHAD                       00000FE4
-STKOVF                            00000007
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 38
+SS_CmdNormal                      0000015B
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 39
 
 F1822 Macros
 SYMBOL TABLE
   LABEL                             VALUE 
 
+SS_Move_It                        00000161
+SS_Start_Loop                     0000014F
+STATUS                            00000003
+STATUS_SHAD                       00000FE4
+STKOVF                            00000007
 STKPTR                            00000FED
 STKUNF                            00000006
 STR1A                             00000000
@@ -2170,16 +2232,18 @@ STR1SYNC                          00000004
 SUBBF                             
 SWDTEN                            00000000
 SYNC                              00000004
-SaveParams                        000001B3
-SaveParams_L1                     000001B9
+SaveParams                        000001D5
+SaveParams_L1                     000001DB
+ServoMoveTime                     00000064
 ServoOff                          Flags,4
-SetMiddlePosition                 0000015B
-SetTrue                           00000192
-Set_Dest_End                      000000D0
+SetDestAsCur                      0000017F
+SetMiddlePosition                 00000176
+SetTrue                           000001B4
+Set_Dest_End                      000000D7
 SigOutTime                        00000070
 SigOutTimeH                       00000071
 SlewChangeRate                    00000010
-StartServo                        00000144
+StartServo                        0000014B
 SysFlags                          00000037
 SysLEDTrisBit                     TRISA,4
 SystemBlink_1                     00000018
@@ -2206,6 +2270,12 @@ T1GSS0                            00000000
 T1GSS1                            00000001
 T1GTM                             00000005
 T1GVAL                            00000002
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 40
+
+F1822 Macros
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 T1OSCEN                           00000003
 T1OSCR                            00000007
 T1OSI                             00000005
@@ -2213,12 +2283,6 @@ T1OSO                             00000004
 T2CKPS0                           00000000
 T2CKPS1                           00000001
 T2CON                             0000001C
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 39
-
-F1822 Macros
-SYMBOL TABLE
-  LABEL                             VALUE 
-
 T2CON_Value                       0000004E
 T2OUTPS0                          00000003
 T2OUTPS1                          00000004
@@ -2265,21 +2329,21 @@ TUN5                              00000005
 TX9                               00000006
 TX9D                              00000000
 TXCKSEL                           00000002
-TXEN                              00000005
-TXIE                              00000004
-TXIF                              00000004
-TXREG                             0000019A
-TXSTA                             0000019E
-TestT1_Zero                       000001DF
-TestT2_Zero                       000001DC
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 40
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 41
 
 F1822 Macros
 SYMBOL TABLE
   LABEL                             VALUE 
 
-TestT3_Zero                       000001D9
-TestT4_Zero                       000001D6
+TXEN                              00000005
+TXIE                              00000004
+TXIF                              00000004
+TXREG                             0000019A
+TXSTA                             0000019E
+TestT1_Zero                       00000201
+TestT2_Zero                       000001FE
+TestT3_Zero                       000001FB
+TestT4_Zero                       000001F8
 TestTimerIsZero                   
 Timer1Hi                          00000028
 Timer1Lo                          00000027
@@ -2324,6 +2388,12 @@ _C                                STATUS,C
 _CLKOUTEN_OFF                     0000FFFF
 _CLKOUTEN_ON                      0000F7FF
 _CONFIG1                          00008007
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 42
+
+F1822 Macros
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 _CONFIG2                          00008008
 _CPD_OFF                          0000FFFF
 _CPD_ON                           0000FEFF
@@ -2331,12 +2401,6 @@ _CP_OFF                           0000FFFF
 _CP_ON                            0000FF7F
 _DEVID1                           00008006
 _FCMEN_OFF                        0000DFFF
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 41
-
-F1822 Macros
-SYMBOL TABLE
-  LABEL                             VALUE 
-
 _FCMEN_ON                         0000FFFF
 _FOSC_ECH                         0000FFFF
 _FOSC_ECL                         0000FFFD
@@ -2383,6 +2447,12 @@ kServoDwellTime                   00009C40
 mCall0To1                         
 mCall0To2                         
 mCall0To3                         
+MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   8-6-2019  16:11:16         PAGE 43
+
+F1822 Macros
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 mCall1To0                         
 mCall1To2                         
 mCall1To3                         
@@ -2390,12 +2460,6 @@ mCall2To0
 mCall2To1                         
 mCall2To3                         
 mCall3To0                         
-MPASM 5.84  /PROJECTS/SM_CTRL_RC_SERVO/FIRMW   7-20-2019  17:01:16         PAGE 42
-
-F1822 Macros
-SYMBOL TABLE
-  LABEL                             VALUE 
-
 mCall3To1                         
 mCall3To2                         
 mPCLGoto                          
@@ -2412,6 +2476,6 @@ useRS232                          00000000
 
 Errors   :     0
 Warnings :     0 reported,     0 suppressed
-Messages :     0 reported,    52 suppressed
+Messages :     0 reported,    56 suppressed
 
 
