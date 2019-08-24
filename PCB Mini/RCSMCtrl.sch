@@ -6,8 +6,8 @@ $Descr A 11000 8500
 encoding utf-8
 Sheet 1 1
 Title "R/C Servo Switch Machine Control"
-Date "2019-07-13"
-Rev "n/c"
+Date "2019-08-24"
+Rev "A"
 Comp "DMFE"
 Comment1 "G2R Mini Version"
 Comment2 ""
@@ -161,13 +161,13 @@ L Connector_Generic:Conn_01x03 P2
 U 1 1 5615E998
 P 8050 4900
 F 0 "P2" H 8050 5100 50  0000 C CNN
-F 1 "CONN_01X03" H 8150 4700 50  0000 C CNN
+F 1 "CONN_01X03" H 8150 4700 50  0001 C CNN
 F 2 "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical" H 8050 4900 60  0001 C CNN
 F 3 "" H 8050 4900 60  0000 C CNN
 	1    8050 4900
 	1    0    0    -1  
 $EndComp
-Text Notes 8200 4650 0    60   ~ 0
+Text Notes 8050 4650 0    60   ~ 0
 Servo
 $Comp
 L power:+5V #PWR05
@@ -867,7 +867,7 @@ Wire Wire Line
 Wire Wire Line
 	6300 5500 6300 5800
 Wire Wire Line
-	6150 6100 6150 6400
+	6150 6100 6150 6300
 Wire Wire Line
 	4450 4200 4900 4200
 Wire Wire Line
@@ -902,8 +902,8 @@ L Connector_Generic:Conn_01x10 P1
 U 1 1 5D2AC440
 P 1350 1600
 F 0 "P1" H 1350 2100 50  0000 C CNN
-F 1 "Conn_01x10" H 1350 1000 50  0000 C CNN
-F 2 "Connector_Phoenix_MSTB:PhoenixContact_MSTBVA_2,5_10-G-5,08_1x10_P5.08mm_Vertical" H 1350 1600 50  0001 C CNN
+F 1 "Conn_01x10" H 1350 1000 50  0001 C CNN
+F 2 "Connector_Phoenix_MC:PhoenixContact_MC_1,5_10-GF-3.5_1x10_P3.50mm_Horizontal_ThreadedFlange" H 1350 1600 50  0001 C CNN
 F 3 "~" H 1350 1600 50  0001 C CNN
 	1    1350 1600
 	-1   0    0    -1  
@@ -934,4 +934,48 @@ Wire Wire Line
 	1850 2100 1550 2100
 Wire Wire Line
 	1850 2100 1850 2750
+Text Notes 850  7800 0    60   ~ 0
+Rev A Added remote connector, 3.5mm terminals
+$Comp
+L Connector_Generic:Conn_01x03 P3
+U 1 1 5D6178B3
+P 5400 6300
+F 0 "P3" H 5400 6500 50  0000 C CNN
+F 1 "CONN_01X03" H 5500 6100 50  0001 C CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical" H 5400 6300 60  0001 C CNN
+F 3 "" H 5400 6300 60  0000 C CNN
+	1    5400 6300
+	-1   0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR018
+U 1 1 5D6187B2
+P 5750 6500
+F 0 "#PWR018" H 5750 6250 50  0001 C CNN
+F 1 "GND" H 5750 6350 50  0000 C CNN
+F 2 "" H 5750 6500 60  0000 C CNN
+F 3 "" H 5750 6500 60  0000 C CNN
+	1    5750 6500
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	6300 5800 5750 5800
+Wire Wire Line
+	5750 5800 5750 6200
+Wire Wire Line
+	5750 6200 5600 6200
+Connection ~ 6300 5800
+Wire Wire Line
+	5600 6300 6150 6300
+Connection ~ 6150 6300
+Wire Wire Line
+	6150 6300 6150 6400
+Wire Wire Line
+	5600 6400 5750 6400
+Wire Wire Line
+	5750 6400 5750 6500
+Text Notes 4950 6050 0    60   ~ 0
+Remote Setup
+Text Notes 5100 6450 0    65   ~ 0
+SW1\nSW2\nGND
 $EndSCHEMATC
