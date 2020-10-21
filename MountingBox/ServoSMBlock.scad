@@ -16,7 +16,7 @@
 //  ***** for STL output *****
 // Arm(L=37.5);
 // SMBlock();
-// SMBlock(PCBMount="Both");
+ SMBlock(PCBMount="Both");
 // mirror([1,0,0]) SMBlock(PCBMount="Both"); // Left side mount
 // SMBlock(PCBMount="G2RrA");
 // mirror([1,0,0]) SMBlock(PCBMount="G2RrA"); // Left side mount
@@ -152,9 +152,10 @@ module SMBlock(PCBMount="Both"){
 		translate([Shaft_x,Shaft_y+11,4]) rotate([0,-45,0]) cylinder(d=8,h=30);
 		
 		// Servo
-		translate([Shaft_x,Shaft_y,Shaft_z-Servo_TopOfWheel]) rotate([0,0,90]) Servo_LD20MG(BottomMount=false,TopAccess=false);
+		translate([Shaft_x,Shaft_y,Shaft_z-Servo_TopOfWheel]) rotate([0,0,90]) Servo_HX5010(BottomMount=false,TopAccess=false,Xtra_w=0.6, Xtra_h=5);
+		//Servo_LD20MG(BottomMount=false,TopAccess=false);
 		// remove servo bottom
-		translate([Shaft_x-10.25,Shaft_y-20-10,-Overlap]) cube([20.5,40.5,3]);
+		//translate([Shaft_x-10.25,Shaft_y-20-10,-Overlap]) cube([20.5,40.5,3]);
 	
 		// Remove extra
 		translate([-MH_x/2,-MH_y/2,-Overlap])hull(){
