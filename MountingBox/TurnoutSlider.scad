@@ -66,12 +66,12 @@ module RoundRect(X,Y,Z,R){
 } // RoundRect
 
 module MountingBlock(){
-	Travel=4;
-	MB_L=35;
+	Travel=3.5;
+	MB_L=40;
 	MB_W=Silde_L+Travel;
 	RoadBed_H=3/16*25.4;
 	MB_H=RoadBed_H+1.5;
-	ThrowBar_w=3;
+	ThrowBar_w=5.6+1;
 	
 	BoltInset=4.5;
 	
@@ -98,8 +98,10 @@ module MountingBlock(){
 		translate([-MB_L/2+BoltInset,-4,MB_H]) Bolt4ButtonHeadHole();
 		translate([MB_L/2-BoltInset,-4,MB_H]) Bolt4ButtonHeadHole();
 			
+		//translate([-MB_L/2-Overlap,-MB_W/2-Overlap,RoadBed_H]) cube([MB_L+Overlap*2,7,2]);
+		
 		// Throw bar
-		translate([MB_L/2-BoltInset*2-1-ThrowBar_w/2,-MB_W/2-Overlap,RoadBed_H]) cube([ThrowBar_w,MB_W+Overlap*2,MB_H]);
+		translate([MB_L/2-BoltInset*2-ThrowBar_w,-MB_W/2-Overlap,RoadBed_H]) cube([ThrowBar_w,MB_W+Overlap*2,MB_H]);
 	} // difference
 	
 	// torsion rod guides
