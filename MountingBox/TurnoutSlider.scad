@@ -3,14 +3,19 @@
 // Filename: TurnoutSlider.scad
 // by Dave Flynn
 // Created: 10/20/2020
-// Revision: 0.9   10/20/2020
+// Revision: 1.0   10/21/2020
 // Units: mm
 // ****************************************
 //  ***** History *****
+// 1.0   10/21/2020 Turnout lock.
 // 0.9   10/20/2020 First code.
 // ****************************************
 //  ***** for STL output
-// MountingBlock();
+// MountingBlock(HasLock=false);
+// mirror([0,1,0]) MountingBlock(HasLock=false);
+// MountingBlock(HasLock=true); // for #6 left
+// mirror([0,1,0]) MountingBlock(HasLock=true); // for #6 right
+//
 // Slider();
 // ****************************************
 
@@ -65,11 +70,11 @@ module RoundRect(X,Y,Z,R){
 	} // hull
 } // RoundRect
 
-module MountingBlock(){
-	Travel=3.5;
+module MountingBlock(HasLock=false){
+	Travel=4.0; // 3.5 is not quite enough
 	MB_L=40;
 	MB_W=Silde_L+Travel;
-	RoadBed_H=3/16*25.4;
+	RoadBed_H=4.7; // Woodland Scenics Track-Bed
 	MB_H=RoadBed_H+1.5;
 	ThrowBar_w=5.6+1;
 	
@@ -105,10 +110,31 @@ module MountingBlock(){
 	} // difference
 	
 	// torsion rod guides
-			translate([-MB_L/2+3,Silde_L/4,MB_H-Overlap]){
-				translate([0,2,0]) cylinder(d=3,h=2);
-				translate([0,-2,0]) cylinder(d=3,h=2);
-			}
+    translate([-MB_L/2+3,Silde_L/4,MB_H-Overlap]){
+        translate([0,2,0]) cylinder(d=3,h=2);
+        translate([0,-2,0]) cylinder(d=3,h=2);
+    }
+    
+    // Atlas Turnout Lock
+    Lock_X=18;
+    Lock_Y=6.5;
+    LockBody_Edge=6.6; // from center of throw bar
+    if (HasLock==true) difference(){
+        translate([MB_L/2-Lock_X/2,MB_W/2,0]) RoundRect(X=Lock_X,Y=Lock_Y*2,Z=MB_H,R=2);
+        
+        // Throw bar
+		translate([MB_L/2-BoltInset*2-ThrowBar_w,-MB_W/2-Overlap,RoadBed_H]) cube([ThrowBar_w,MB_W+Lock_Y+Overlap*2,MB_H]);
+        
+        // Lock Tie
+        translate([MB_L/2-BoltInset*2-ThrowBar_w/2,MB_W/2+2,RoadBed_H]) cube([LockBody_Edge,Lock_Y,MB_H]);
+        
+        translate([MB_L/2-BoltInset*2-ThrowBar_w/2+LockBody_Edge+1.5,MB_W/2+2+0.1,RoadBed_H]) hull(){
+            cylinder(d=0.2,h=MB_H);
+            translate([-1.5,0,0]) cylinder(d=0.2,h=MB_H);
+            translate([0,1.5,0]) cylinder(d=0.2,h=MB_H);
+            translate([-1.5,2.8,0]) cylinder(d=0.2,h=MB_H);
+        }
+    }
 } // MountingBlock
 
 //translate([0,0,-2.2]) MountingBlock();
