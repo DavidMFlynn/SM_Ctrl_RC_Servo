@@ -3,10 +3,11 @@
 // by Dave Flynn
 // Filename:ServoSMBlock.scad
 // Created: 8/18/2018
-// Revision: 1.0b1 8/6/2019
+// Revision: 1.1 10/26/2020
 // Units: mm
 // **************************************************
 //  ***** History ******
+// 1.1 10/26/2020 Added PivotBase
 // 1.0b1 8/6/2019 Added #6 screw hole for wire strain relief.
 // 1.0a2 8/4/2019 Common mounting for PCB.
 // 1.0a1 7/17/2019 RC1, Servo and PCB mount, Ball servo horn.
@@ -15,11 +16,17 @@
 // **************************************************
 //  ***** for STL output *****
 // Arm(L=37.5);
-// SMBlock();
- SMBlock(PCBMount="Both");
+//
+// SMBlock(PCBMount="Both");
 // mirror([1,0,0]) SMBlock(PCBMount="Both"); // Left side mount
 // SMBlock(PCBMount="G2RrA");
 // mirror([1,0,0]) SMBlock(PCBMount="G2RrA"); // Left side mount
+//
+// rotate([180,0,0]) PivotBase(); // for right mount
+// rotate([180,0,0]) mirror([1,0,0]) PivotBase(); // for left mount
+// rotate([180,0,0]) PivotBaseSide(); // for right side mount
+// rotate([180,0,0]) mirror([1,0,0]) PivotBaseSide(); // for left side mount
+//
 // **************************************************
 
 
@@ -231,6 +238,97 @@ module SMBlock(PCBMount="Both"){
 } // SMBlock
 
 //SMBlock();
+
+
+module PivotBase(){
+	Block_x=2.75*25.4;
+	Block_y=3.625*25.4;
+	Block_z=2; 
+	
+	MH_x=1*25.4;
+	MH_y=1.875*25.4;
+	
+	Pin_d=0.062*25.4+IDXtra*2;
+	Pin_x=Block_x/2-21;
+	Pin_y=Block_y/2+18;
+	
+	difference(){
+		union(){
+			RoundRect(X=Block_x,Y=Block_y,Z=Block_z,R=2);
+			
+			hull(){
+				translate([Pin_x-15,Block_y/2-Overlap,0]) cube([30,0.01,Block_z]);
+				translate([Pin_x,Pin_y,0]) cylinder(d=8,h=Block_z);
+			}
+			translate([Pin_x,Pin_y,-3]) cylinder(d=9,h=3+Block_z);
+		} // union
+			
+		translate([Pin_x,Pin_y,-3-Overlap]){
+			cylinder(d=Pin_d,h=5+Overlap*2);
+			cylinder(d1=3.5,d2=Pin_d,h=3);
+			translate([0,0,4]) cylinder(d2=3.5,d1=Pin_d,h=3);
+		}
+		
+		// mounting holes
+		translate([-MH_x/2,MH_y/2,Block_z]) Bolt6ClearHole(depth=Block_z);
+		translate([MH_x/2,-MH_y/2,Block_z]) Bolt6ClearHole(depth=Block_z);
+		
+		// Remove extra
+		translate([-MH_x/2,-MH_y/2,-Overlap])hull(){
+			cylinder(d=22,h=Block_z+Overlap*2);
+			translate([0,20,0]) cylinder(d=22,h=Block_z+Overlap*2);
+		}
+	
+	} // diff
+		
+} // PivotBase
+
+//PivotBase();
+
+module PivotBaseSide(){
+	Block_x=2.75*25.4;
+	Block_y=3.625*25.4;
+	Block_z=2; 
+	
+	MH_x=1*25.4;
+	MH_y=1.875*25.4;
+	
+	Pin_d=0.062*25.4+IDXtra*2;
+	Pin_x=Block_x/2+16;
+	Pin_y=Block_y/2-20;
+	
+	difference(){
+		union(){
+			RoundRect(X=Block_x,Y=Block_y,Z=Block_z,R=2);
+			
+			hull(){
+				translate([Block_x/2-Overlap,Pin_y-15,0]) cube([0.01,30,Block_z]);
+				translate([Pin_x,Pin_y,0]) cylinder(d=8,h=Block_z);
+			}
+			translate([Pin_x,Pin_y,-3]) cylinder(d=9,h=3+Block_z);
+		} // union
+			
+		translate([Pin_x,Pin_y,-3-Overlap]){
+			cylinder(d=Pin_d,h=5+Overlap*2);
+			cylinder(d1=3.5,d2=Pin_d,h=3);
+			translate([0,0,4]) cylinder(d2=3.5,d1=Pin_d,h=3);
+		}
+		
+		// mounting holes
+		translate([-MH_x/2,MH_y/2,Block_z]) Bolt6ClearHole(depth=Block_z);
+		translate([MH_x/2,-MH_y/2,Block_z]) Bolt6ClearHole(depth=Block_z);
+		
+		// Remove extra
+		translate([-MH_x/2,-MH_y/2,-Overlap])hull(){
+			cylinder(d=22,h=Block_z+Overlap*2);
+			translate([0,20,0]) cylinder(d=22,h=Block_z+Overlap*2);
+		}
+	
+	} // diff
+		
+} // PivotBaseSide
+
+// PivotBaseSide();
 
 module HPRRSMBlock(){
 	Block_x=2.75*25.4;
