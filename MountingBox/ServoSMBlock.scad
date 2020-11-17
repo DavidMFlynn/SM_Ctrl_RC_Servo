@@ -3,10 +3,11 @@
 // by Dave Flynn
 // Filename:ServoSMBlock.scad
 // Created: 8/18/2018
-// Revision: 1.1 10/26/2020
+// Revision: 1.2 11/16/2020
 // Units: mm
 // **************************************************
 //  ***** History ******
+// 1.2 11/16/2020 Added extension arm parts
 // 1.1 10/26/2020 Added PivotBase
 // 1.0b1 8/6/2019 Added #6 screw hole for wire strain relief.
 // 1.0a2 8/4/2019 Common mounting for PCB.
@@ -16,6 +17,9 @@
 // **************************************************
 //  ***** for STL output *****
 // Arm(L=37.5);
+//
+// RodEnd(L=20); // part of extension arm
+// rotate([90,0,0]) RodConnector(L=20); // part of extension arm
 //
 // SMBlock(PCBMount="Both");
 // mirror([1,0,0]) SMBlock(PCBMount="Both"); // Left side mount
@@ -37,7 +41,57 @@ $fn=90;
 Overlap=0.05;
 IDXtra=0.2;
 
+module RodConnector(L=20){
+	Ball_d=5/16*25.4;
+	Arm_h=5;
+	
+	difference(){
+		hull(){
+			translate([0,-Ball_d/2-2,-Arm_h/2]) cube([0.1,Ball_d+4,Arm_h]);
+			
+			translate([L,0,0]) //cylinder(d=Ball_d+4,h=Ball_d+4,center=true);
+			cube([Ball_d+4,Ball_d+4,Ball_d+4],center=true);
+		} // hull
+		
+		
+		//Mounting Rod
+		translate([0,0,0]) rotate([0,-90,0]) Bolt6Hole(depth=10);
+		
+		// the ball
+		translate([L,0,0]) sphere(d=Ball_d+IDXtra,$fn=60);
+		translate([L,0,0]) cube([Ball_d+8,Ball_d+7,Arm_h+IDXtra*3],center=true); //cylinder(d=Ball_d+7,h=Arm_h+IDXtra*3,center=true);
+		
+		
+	} // difference
+} // RodConnector
 
+//RodConnector();
+
+module RodEnd(L=20){
+	Ball_d=5/16*25.4;
+	Arm_h=5;
+	
+	difference(){
+			
+		hull(){
+			translate([0,-Ball_d/2,0]) cube([0.1,Ball_d,Arm_h]);
+			translate([L,0,0]) cylinder(d=Ball_d+4,h=Arm_h);
+		} // hull
+			
+		//Mounting Rod
+		translate([0,0,Arm_h/2]) rotate([0,-90,0]) Bolt6Hole(depth=10);
+		// the ball
+		translate([L,0,Arm_h/2]) sphere(d=Ball_d+IDXtra,$fn=60);
+		//translate([L,0,-Overlap]) cylinder(d=Ball_d*0.707,h=Arm_h+Overlap*2);
+		
+		// slot
+		translate([L-Ball_d,-0.5,-Overlap]) cube([Ball_d*2+Overlap,1,Arm_h+Overlap*2]);
+		
+	} // diff
+	
+} // RodEnd
+
+//RodEnd();
 
 module Arm(L=37.5){
 	// Arm for MG996R servo

@@ -32,6 +32,48 @@ SM_Rod_d=0.0625*25.4;
 	Dove_h=3.5;
 Silde_L=14;
 
+module ExtendedSlider(L=30){
+	
+	
+	difference(){
+		union(){
+			hull(){
+				translate([-Dove_w/2,-Silde_L/2,0]) cube([Dove_w,Silde_L,0.6]);
+				translate([-Dove_w2/2,-Silde_L/2,Dove_h]) cube([Dove_w2,Silde_L,0.01]);
+			} // hull
+			
+			translate([0,-L,0])
+			hull(){
+				translate([-Dove_w/2,-Silde_L/2,0]) cube([Dove_w,Silde_L,0.6]);
+				translate([-Dove_w2/2,-Silde_L/2,Dove_h]) cube([Dove_w2,Silde_L,0.01]);
+			} // hull
+			
+			// torsion rod guides
+			translate([0,Silde_L/4,0]){
+				translate([0,2,Dove_h-Overlap]) cylinder(d=3,h=2);
+				translate([0,-2,Dove_h-Overlap]) cylinder(d=3,h=2);
+			}
+			
+			// connector bar
+			hull(){
+				translate([0,-L,0]) cylinder(d=Dove_w2,h=2.2);
+				cylinder(d=Dove_w2,h=2.2);
+			} // hull
+		} // union
+		
+		
+		// throw rod
+		translate([0,-L-Silde_L/4,0]){
+		translate([0,0,-Overlap]) cylinder(d=SM_Rod_d+IDXtra*2,h=Dove_h);
+		translate([0,0,1.3]) cylinder(d=4,h=Dove_h);
+		}
+		
+		
+	} // difference
+} // ExtendedSlider
+
+ translate([-4,0,0]) ExtendedSlider(L=30);
+
 module Slider(){
 	
 	
@@ -69,6 +111,47 @@ module RoundRect(X,Y,Z,R){
 		translate([X/2-R,Y/2-R,0]) cylinder(r=R,h=Z);
 	} // hull
 } // RoundRect
+
+
+module ExtenderMount(){
+	Travel=4.0; // 3.5 is not quite enough
+	MB_L=30;
+	MB_W=Silde_L+Travel;
+	RoadBed_H=4.7; // Woodland Scenics Track-Bed
+	MB_H=RoadBed_H+1.5;
+	
+	BoltInset=4.5;
+	
+	difference(){
+		translate([-4,0,0]) RoundRect(X=MB_L,Y=MB_W,Z=MB_H,R=2);
+		
+		translate([-4,0,0]){
+		// Dove
+		hull(){
+			translate([-Dove_w/2-IDXtra,-MB_W/2-Overlap,2]) cube([Dove_w+IDXtra*2,MB_W+Overlap*2,0.6+IDXtra]);
+			translate([-Dove_w2/2-IDXtra,-MB_W/2-Overlap,2+Dove_h+IDXtra*2]) cube([Dove_w2+IDXtra*2,MB_W+Overlap*2,0.01]);
+		} // hull
+		translate([-Dove_w2/2-IDXtra,-MB_W/2-Overlap,2+Dove_h+IDXtra*2]) cube([Dove_w2+IDXtra*2,MB_W+Overlap*2,MB_H]);
+		
+		// throw rod slot
+		translate([0,-Silde_L/4,-Overlap])
+			hull(){
+				translate([0,-Travel/2,0]) cylinder(d=SM_Rod_d+IDXtra*2,h=MB_H);
+				translate([0,Travel/2,0]) cylinder(d=SM_Rod_d+IDXtra*2,h=MB_H);
+			} // hull
+		}
+		
+		// Mounting holes
+		translate([-MB_L/2+BoltInset,-4,MB_H]) Bolt4ButtonHeadHole();
+		translate([MB_L/2-BoltInset,-4,MB_H]) Bolt4ButtonHeadHole();
+			
+		//translate([-MB_L/2-Overlap,-MB_W/2-Overlap,RoadBed_H]) cube([MB_L+Overlap*2,7,2]);
+		
+	} // difference
+	
+} // ExtenderMount
+
+translate([0,-30,-2.2]) ExtenderMount();
 
 module MountingBlock(HasLock=false){
 	Travel=4.0; // 3.5 is not quite enough
@@ -137,7 +220,7 @@ module MountingBlock(HasLock=false){
     }
 } // MountingBlock
 
-//translate([0,0,-2.2]) MountingBlock();
+translate([0,0,-2.2]) MountingBlock();
 //translate([-4,0,0]) Slider();
 
 
