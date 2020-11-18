@@ -3,10 +3,11 @@
 // Filename: TurnoutSlider.scad
 // by Dave Flynn
 // Created: 10/20/2020
-// Revision: 1.0   10/21/2020
+// Revision: 1.1   11/17/2020
 // Units: mm
 // ****************************************
 //  ***** History *****
+// 1.1   11/17/2020 Added ExtendedSlider and mount
 // 1.0   10/21/2020 Turnout lock.
 // 0.9   10/20/2020 First code.
 // ****************************************
@@ -17,6 +18,8 @@
 // mirror([0,1,0]) MountingBlock(HasLock=true); // for #6 right
 //
 // Slider();
+// ExtendedSlider(L=80);
+// ExtenderMount(); // used with ExtendedSlider
 // ****************************************
 
 include<CommonStuffSAEmm.scad>
@@ -72,7 +75,7 @@ module ExtendedSlider(L=30){
 	} // difference
 } // ExtendedSlider
 
- translate([-4,0,0]) ExtendedSlider(L=30);
+// translate([-4,0,0]) ExtendedSlider(L=30);
 
 module Slider(){
 	
@@ -142,8 +145,9 @@ module ExtenderMount(){
 		}
 		
 		// Mounting holes
+		translate([-4,0,0]){
 		translate([-MB_L/2+BoltInset,-4,MB_H]) Bolt4ButtonHeadHole();
-		translate([MB_L/2-BoltInset,-4,MB_H]) Bolt4ButtonHeadHole();
+		translate([MB_L/2-BoltInset,-4,MB_H]) Bolt4ButtonHeadHole();}
 			
 		//translate([-MB_L/2-Overlap,-MB_W/2-Overlap,RoadBed_H]) cube([MB_L+Overlap*2,7,2]);
 		
@@ -151,7 +155,7 @@ module ExtenderMount(){
 	
 } // ExtenderMount
 
-translate([0,-30,-2.2]) ExtenderMount();
+//translate([0,-30,-2.2]) ExtenderMount();
 
 module MountingBlock(HasLock=false){
 	Travel=4.0; // 3.5 is not quite enough
@@ -220,7 +224,7 @@ module MountingBlock(HasLock=false){
     }
 } // MountingBlock
 
-translate([0,0,-2.2]) MountingBlock();
+//translate([0,0,-2.2]) MountingBlock();
 //translate([-4,0,0]) Slider();
 
 
