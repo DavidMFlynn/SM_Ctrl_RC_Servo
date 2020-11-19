@@ -132,7 +132,7 @@ module RAPivot(){
     
 } // RAPivot
 
-translate([-8,-Silde_L/4-2,Dove_h+Overlap]) RAPivot();
+translate([-8,-Silde_L/4-2,0.5+Dove_h+Overlap]) RAPivot();
 
 module RAExtension(L=30){
 	
@@ -205,7 +205,7 @@ module RAMountingBlock(){
 		}
 		
 		// Mounting holes
-		translate([-MB_L/2+BoltInset,-4,MB_H]) Bolt4ButtonHeadHole();
+		translate([-MB_L/2+BoltInset+3,4,MB_H]) Bolt4ButtonHeadHole();
 		translate([MB_L/2-BoltInset,-4,MB_H]) Bolt4ButtonHeadHole();
 			
 		//translate([-MB_L/2-Overlap,-MB_W/2-Overlap,RoadBed_H]) cube([MB_L+Overlap*2,7,2]);
@@ -220,6 +220,8 @@ module RAMountingBlock(){
         translate([0,-2,0]) cylinder(d=3,h=2);
     }
     
+    // pivot pin
+    translate([-4-8,-MB_W/2+3.5,MB_H-Overlap]) cylinder(d=3,h=2);
     
 } // RAMountingBlock
 
