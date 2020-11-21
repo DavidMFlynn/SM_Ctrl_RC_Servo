@@ -230,6 +230,8 @@ module RAMountingBlock(){
 		// Throw bar
 		translate([MB_L/2-BoltInset*2-ThrowBar_w,-MB_W/2-Overlap,RoadBed_H]) cube([ThrowBar_w,MB_W+Overlap*2,MB_H]);
 		
+		// pivot pin
+		translate([-4-8,-MB_W/2+3.5,MB_H]) Bolt4Hole();
 	} // difference
 	
 	// torsion rod guides
@@ -239,7 +241,7 @@ module RAMountingBlock(){
     }
     
     // pivot pin
-    translate([-4-8,-MB_W/2+3.5,MB_H-Overlap]) cylinder(d=RA_Pivot_Pin_d,h=3);
+   // translate([-4-8,-MB_W/2+3.5,MB_H-Overlap]) cylinder(d=RA_Pivot_Pin_d,h=3);
     
 } // RAMountingBlock
 
