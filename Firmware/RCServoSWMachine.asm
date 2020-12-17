@@ -319,11 +319,11 @@ HasISR	EQU	0x80	;used to enable interupts 0x80=true 0x00=false
 ;
 ;-----------------------------------------------------------------
 ; blink LEDs
-	BankSel	TRISA
+	movlb                  1                      ;bank 1
 	BSF	SysLEDTrisBit	;LED off
 	BSF	LED2TrisBit	;LED2 off
 ;
-	BankSel	PORTA	;bank 0
+	movlb	0	;bank 0
 	BCF	IncBtnFlag
 	BTFSS	IncBtnBit
 	BSF	IncBtnFlag
@@ -340,9 +340,9 @@ SystemBlink_1	DECFSZ	LED_Ticks,F
 	MOVF	LED_Time,W
 	movwf	LED_Ticks
 ;
-	BankSel	TRISA
+	movlb                  1                      ;bank 1
 	BCF	SysLEDTrisBit	;LED on
-SystemBlink_end	MOVLB	0
+SystemBlink_end	MOVLB	0                      ;bank 0
 ;
 	decfsz	LED2_Ticks,F
 	bra	LED2_End
@@ -350,8 +350,9 @@ SystemBlink_end	MOVLB	0
 	MOVF	LED2_Time,W
 	movwf	LED2_Ticks
 ;
-	BankSel	TRISA
-	BTFSC	LED2Flag
+	BTFSS	LED2Flag
+	bra                    LED2_End
+	movlb                  1                      ;bank 1
 	BCF	LED2TrisBit
 ;
 LED2_End	MOVLB	0
@@ -448,7 +449,7 @@ start	MOVLB	0x01	; select bank 1
 ;
 ; setup timer 1 for 0.5uS/count
 ;
-	BANKSEL	T1CON	; bank 0
+	movlb	0	; bank 0
 	MOVLW	T1CON_Val
 	MOVWF	T1CON
 	bcf	T1GCON,TMR1GE
@@ -459,7 +460,6 @@ start	MOVLB	0x01	; select bank 1
 ; Setup timer 2 for 0.01S/Interupt
 	MOVLW	T2CON_Value	;Setup T2 for 100/s
 	MOVWF	T2CON
-	BANKSEL	PR2
 	MOVLW	PR2_Value
 	MOVWF	PR2
 	MOVLB	1	;Bank 1
@@ -469,19 +469,19 @@ start	MOVLB	0x01	; select bank 1
 ; setup ccp1
 ;
 	BSF	ServoOff
-	BANKSEL	APFCON
+	movlb	2                      ;bank 2
 	BSF	APFCON,CCP1SEL	;RA5
-	BANKSEL	CCP1CON
+	movlb	5                      ;bank 5
 	CLRF	CCP1CON
 ;
 	MOVLB	0x01	;Bank 1
 	bsf	PIE1,CCP1IE
 ;
 ; setup data ports
-	BANKSEL	PORTA
+	movlb                  0                      ;bank 0
 	MOVLW	PortAValue
 	MOVWF	PORTA	;Init PORTA
-	BANKSEL	TRISA
+	movlb                  1                      ;bank 1
 	MOVLW	PortADDRBits
 	MOVWF	TRISA
 ;

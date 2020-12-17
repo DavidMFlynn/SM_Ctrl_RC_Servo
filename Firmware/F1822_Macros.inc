@@ -3,8 +3,8 @@
 ;===================================================================================
 ;
 ;  FileName: F1822 Macros.inc
-;  Date: 9/4/2014
-;  File Version: 1.3.2
+;  Date: 8/1/2020
+;  File Version: 1.3.3
 ;  
 ;  Author: David M. Flynn
 ;  Company: Oxford V.U.E., Inc.
@@ -17,6 +17,7 @@
 ;============================================================================================
 ; Revision History
 ;
+; 1.3.3  8/1/2020      MacroPIC 2.0.7
 ; 1.3.2  9/4/2014	Modified for 12F1822
 ; 1.3.1  11/16/13	Modified for 16F1847
 ; 1.3    4/28/04	Added mBankISel
@@ -33,6 +34,9 @@
 ;
 ;============================================================================================
 ; Conditionals
+                       ifndef useMacroPIC
+                       constant	useMacroPIC=1
+                       endif
 ;
 ;============================================================================================
 ; Name	(additional stack words required), (Return Bank) Description
@@ -540,20 +544,22 @@ SKPNB	macro
 ;	BTFSC	STATUS,DC
 ;	endm
 ;
+                       if useMacroPIC
 ;==============================================================
 ; Skip on Not Zero
 ;
-;SKPNZ	macro
-;	BTFSC	STATUS,Z
-;	endm
+SKPNZ	macro
+	BTFSC	STATUS,Z
+	endm
 ;
 ;==============================================================
 ; Skip on Zero
 ;
-;SKPZ	macro
-;	BTFSS	STATUS,Z
-;	endm
+SKPZ	macro
+	BTFSS	STATUS,Z
+	endm
 ;
+                       endif
 ;==============================================================
 ; Subtract Borrow from File
 ;
